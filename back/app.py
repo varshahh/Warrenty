@@ -123,12 +123,15 @@ def add_product():
         "qr_code": qr_file
     }), 201
 
-# ---------------- DASHBOARD (USER-WISE) ----------------
+# ---------------- DASHBOARD BY USER ----------------
 @app.route('/dashboard/<int:user_id>', methods=['GET'])
 def dashboard(user_id):
+    user = User.query.get(user_id)
+
+    if not user:
+        return jsonify({"message": "User not found"}), 404
 
     user_products = Product.query.filter_by(user_id=user_id).all()
-
     dashboard_data = []
 
     for p in user_products:
@@ -194,9 +197,9 @@ def check_warranty_expiry():
             expiry = datetime.strptime(p.expiry_date, '%Y-%m-%d').date()
             days_left = (expiry - today).days
 
-            if days_left == 5:
+            if days_left in [5, 3, 1]:
                 user = User.query.get(p.user_id)
-                print(f"ALERT: {user.name}, your product '{p.product_name}' warranty expires in 5 days!")
+                print(f"ALERT: {user.name}, your product '{p.product_name}' warranty expires in {days_left} day(s)!")
 
 # ---------------- START SCHEDULER ----------------
 scheduler = BackgroundScheduler()
