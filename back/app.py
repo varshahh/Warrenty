@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 import os
 from apscheduler.schedulers.background import BackgroundScheduler
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
-from werkzeug.security import generate_password_hash, check_password_hash  # 🔐 Added
+from werkzeug.security import generate_password_hash, check_password_hash
 
 # ---------------- APP CONFIG ----------------
 app = Flask(__name__)
@@ -15,7 +15,7 @@ CORS(app)
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///warranty.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['JWT_SECRET_KEY'] = 'your-secret-key'  # Replace with secure key
+app.config['JWT_SECRET_KEY'] = 'super-secret-key-change-this'
 
 db = SQLAlchemy(app)
 jwt = JWTManager(app)
@@ -29,7 +29,7 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(100), unique=True, nullable=False)
-    password = db.Column(db.String(200), nullable=False)  # Increased size for hashed password
+    password = db.Column(db.String(200), nullable=False)
 
 class Product(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -60,7 +60,7 @@ def register():
     if User.query.filter_by(email=email).first():
         return jsonify({"message": "Email already exists"}), 400
 
-    hashed_password = generate_password_hash(password)  # 🔐 Hashing password
+    hashed_password = generate_password_hash(password)
 
     new_user = User(name=name, email=email, password=hashed_password)
     db.session.add(new_user)
@@ -78,7 +78,7 @@ def login():
 
     user = User.query.filter_by(email=email).first()
 
-    if user and check_password_hash(user.password, password):  # 🔐 Checking hashed password
+    if user and check_password_hash(user.password, password):
         access_token = create_access_token(identity=user.id)
         return jsonify({
             "message": "Login successful",
@@ -98,10 +98,6 @@ def add_product():
     product_name = data.get('product_name')
     purchase_date = data.get('purchase_date')
     warranty_days = int(data.get('warranty_period_days'))
-
-    user = User.query.get(current_user_id)
-    if not user:
-        return jsonify({"message": "User not found"}), 404
 
     purchase_dt = datetime.strptime(purchase_date, '%Y-%m-%d')
     expiry_dt = purchase_dt + timedelta(days=warranty_days)
@@ -132,41 +128,13 @@ def add_product():
         "qr_code": qr_file
     }), 201
 
-# ---------------- UPDATE PRODUCT ----------------
-@app.route('/update_product/<int:product_id>', methods=['PUT'])
-@jwt_required()
-def update_product(product_id):
-    current_user_id = get_jwt_identity()
-    data = request.get_json()
-    product = Product.query.get(product_id)
-
-    if not product or product.user_id != current_user_id:
-        return jsonify({"message": "Product not found or unauthorized"}), 404
-
-    product.product_name = data.get('product_name', product.product_name)
-    db.session.commit()
-    return jsonify({"message": "Product updated successfully"}), 200
-
-# ---------------- DELETE PRODUCT ----------------
-@app.route('/delete_product/<int:product_id>', methods=['DELETE'])
-@jwt_required()
-def delete_product(product_id):
-    current_user_id = get_jwt_identity()
-    product = Product.query.get(product_id)
-
-    if not product or product.user_id != current_user_id:
-        return jsonify({"message": "Product not found or unauthorized"}), 404
-
-    db.session.delete(product)
-    db.session.commit()
-    return jsonify({"message": "Product deleted successfully"}), 200
-
 # ---------------- DASHBOARD ----------------
 @app.route('/dashboard', methods=['GET'])
 @jwt_required()
 def dashboard():
     current_user_id = get_jwt_identity()
     user_products = Product.query.filter_by(user_id=current_user_id).all()
+
     dashboard_data = []
 
     for p in user_products:
@@ -193,7 +161,35 @@ def dashboard():
 
     return jsonify(dashboard_data), 200
 
-# ---------------- WARRANTY CHECK ----------------
+# ---------------- GET PRODUCT BY ID (QR SCAN) ----------------
+@app.route('/product/<int:product_id>', methods=['GET'])
+def get_product(product_id):
+    product = Product.query.get(product_id)
+
+    if not product:
+        return jsonify({"message": "Product not found"}), 404
+
+    today = datetime.today().date()
+    expiry = datetime.strptime(product.expiry_date, '%Y-%m-%d').date()
+    days_remaining = (expiry - today).days
+
+    if days_remaining < 0:
+        status = "Expired 🔴"
+    elif days_remaining <= 5:
+        status = "Expiring Soon 🟡"
+    else:
+        status = "Active 🟢"
+
+    return jsonify({
+        "product_id": product.id,
+        "product_name": product.product_name,
+        "purchase_date": product.purchase_date,
+        "expiry_date": product.expiry_date,
+        "days_remaining": days_remaining,
+        "status": status
+    }), 200
+
+# ---------------- WARRANTY CHECK (SCHEDULER) ----------------
 def check_warranty_expiry():
     with app.app_context():
         products = Product.query.all()
