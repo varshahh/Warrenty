@@ -1,5 +1,4 @@
 # ---------------- IMPORTS ----------------
-from werkzeug.security import generate_password_hash, check_password_hash
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
@@ -8,6 +7,7 @@ from datetime import datetime, timedelta
 import os
 from apscheduler.schedulers.background import BackgroundScheduler
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
+from werkzeug.security import generate_password_hash, check_password_hash  # 🔐 Added
 
 # ---------------- APP CONFIG ----------------
 app = Flask(__name__)
@@ -29,7 +29,7 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(100), unique=True, nullable=False)
-    password = db.Column(db.String(100), nullable=False)
+    password = db.Column(db.String(200), nullable=False)  # Increased size for hashed password
 
 class Product(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -60,7 +60,9 @@ def register():
     if User.query.filter_by(email=email).first():
         return jsonify({"message": "Email already exists"}), 400
 
-    new_user = User(name=name, email=email, password=password)
+    hashed_password = generate_password_hash(password)  # 🔐 Hashing password
+
+    new_user = User(name=name, email=email, password=hashed_password)
     db.session.add(new_user)
     db.session.commit()
 
@@ -74,9 +76,9 @@ def login():
     email = data.get('email')
     password = data.get('password')
 
-    user = User.query.filter_by(email=email, password=password).first()
+    user = User.query.filter_by(email=email).first()
 
-    if user:
+    if user and check_password_hash(user.password, password):  # 🔐 Checking hashed password
         access_token = create_access_token(identity=user.id)
         return jsonify({
             "message": "Login successful",
@@ -159,16 +161,11 @@ def delete_product(product_id):
     db.session.commit()
     return jsonify({"message": "Product deleted successfully"}), 200
 
-# ---------------- DASHBOARD BY USER ----------------
+# ---------------- DASHBOARD ----------------
 @app.route('/dashboard', methods=['GET'])
 @jwt_required()
 def dashboard():
     current_user_id = get_jwt_identity()
-    user = User.query.get(current_user_id)
-
-    if not user:
-        return jsonify({"message": "User not found"}), 404
-
     user_products = Product.query.filter_by(user_id=current_user_id).all()
     dashboard_data = []
 
@@ -196,37 +193,7 @@ def dashboard():
 
     return jsonify(dashboard_data), 200
 
-# ---------------- QR PRODUCT FETCH ----------------
-@app.route('/product/<int:product_id>', methods=['GET'])
-@jwt_required()
-def get_product(product_id):
-    current_user_id = get_jwt_identity()
-    product = Product.query.get(product_id)
-
-    if not product or product.user_id != current_user_id:
-        return jsonify({"message": "Product not found or unauthorized"}), 404
-
-    today = datetime.today().date()
-    expiry = datetime.strptime(product.expiry_date, '%Y-%m-%d').date()
-    days_remaining = (expiry - today).days
-
-    if days_remaining < 0:
-        status = "Expired 🔴"
-    elif days_remaining <= 5:
-        status = "Expiring Soon 🟡"
-    else:
-        status = "Active 🟢"
-
-    return jsonify({
-        "product_id": product.id,
-        "product_name": product.product_name,
-        "purchase_date": product.purchase_date,
-        "expiry_date": product.expiry_date,
-        "days_remaining": days_remaining,
-        "status": status
-    }), 200
-
-# ---------------- WARRANTY ALERT FUNCTION ----------------
+# ---------------- WARRANTY CHECK ----------------
 def check_warranty_expiry():
     with app.app_context():
         products = Product.query.all()
@@ -238,7 +205,7 @@ def check_warranty_expiry():
 
             if days_left in [5, 3, 1]:
                 user = User.query.get(p.user_id)
-                print(f"ALERT: {user.name}, your product '{p.product_name}' warranty expires in {days_left} day(s)!")
+                print(f"ALERT: {user.name}, your product '{p.product_name}' expires in {days_left} day(s)!")
 
 # ---------------- START SCHEDULER ----------------
 scheduler = BackgroundScheduler()
