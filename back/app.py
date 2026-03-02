@@ -52,7 +52,6 @@ def home():
 @app.route('/register', methods=['POST'])
 def register():
     data = request.get_json()
-
     name = data.get('name')
     email = data.get('email')
     password = data.get('password')
@@ -61,7 +60,6 @@ def register():
         return jsonify({"message": "Email already exists"}), 400
 
     hashed_password = generate_password_hash(password)
-
     new_user = User(name=name, email=email, password=hashed_password)
     db.session.add(new_user)
     db.session.commit()
@@ -72,14 +70,14 @@ def register():
 @app.route('/login', methods=['POST'])
 def login():
     data = request.get_json()
-
     email = data.get('email')
     password = data.get('password')
 
     user = User.query.filter_by(email=email).first()
 
     if user and check_password_hash(user.password, password):
-        access_token = create_access_token(identity=user.id)
+        # Convert user.id to string here
+        access_token = create_access_token(identity=str(user.id))
         return jsonify({
             "message": "Login successful",
             "user_id": user.id,
@@ -94,7 +92,6 @@ def login():
 def add_product():
     current_user_id = get_jwt_identity()
     data = request.get_json()
-
     product_name = data.get('product_name')
     purchase_date = data.get('purchase_date')
     warranty_days = int(data.get('warranty_period_days'))
@@ -134,7 +131,6 @@ def add_product():
 def dashboard():
     current_user_id = get_jwt_identity()
     user_products = Product.query.filter_by(user_id=current_user_id).all()
-
     dashboard_data = []
 
     for p in user_products:
@@ -161,11 +157,10 @@ def dashboard():
 
     return jsonify(dashboard_data), 200
 
-# ---------------- GET PRODUCT BY ID (QR SCAN) ----------------
+# ---------------- GET PRODUCT BY ID ----------------
 @app.route('/product/<int:product_id>', methods=['GET'])
 def get_product(product_id):
     product = Product.query.get(product_id)
-
     if not product:
         return jsonify({"message": "Product not found"}), 404
 
@@ -188,6 +183,35 @@ def get_product(product_id):
         "days_remaining": days_remaining,
         "status": status
     }), 200
+
+# ---------------- UPDATE PRODUCT ----------------
+@app.route('/update_product/<int:product_id>', methods=['PUT'])
+@jwt_required()
+def update_product(product_id):
+    current_user_id = get_jwt_identity()
+    data = request.get_json()
+    product = Product.query.get(product_id)
+
+    if not product or product.user_id != current_user_id:
+        return jsonify({"message": "Product not found or unauthorized"}), 404
+
+    product.product_name = data.get('product_name', product.product_name)
+    db.session.commit()
+    return jsonify({"message": "Product updated successfully"}), 200
+
+# ---------------- DELETE PRODUCT ----------------
+@app.route('/delete_product/<int:product_id>', methods=['DELETE'])
+@jwt_required()
+def delete_product(product_id):
+    current_user_id = get_jwt_identity()
+    product = Product.query.get(product_id)
+
+    if not product or product.user_id != current_user_id:
+        return jsonify({"message": "Product not found or unauthorized"}), 404
+
+    db.session.delete(product)
+    db.session.commit()
+    return jsonify({"message": "Product deleted successfully"}), 200
 
 # ---------------- WARRANTY CHECK (SCHEDULER) ----------------
 def check_warranty_expiry():
