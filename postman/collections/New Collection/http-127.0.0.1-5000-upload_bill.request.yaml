@@ -1,0 +1,18 @@
+$kind: http-request
+name: http://127.0.0.1:5000/upload_bill
+url: http://127.0.0.1:5000/upload_bill
+method: POST
+body:
+  type: formdata
+  content:
+    - type: file
+      key: bill
+      src:
+        - postman-cloud:///1f11ac0c-5f09-4f40-bab0-a604d2dafe3b
+      description: bill upload
+      disabled: false
+auth:
+  type: bearer
+  credentials:
+    token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmcmVzaCI6ZmFsc2UsImlhdCI6MTc3Mjk1ODIwMiwianRpIjoiNzQyNmRmYTUtY2I5Mi00MjYwLTk1ZjYtY2U0ODJiN2I0NDIyIiwidHlwZSI6ImFjY2VzcyIsInN1YiI6IjQiLCJuYmYiOjE3NzI5NTgyMDIsImNzcmYiOiI1MmM2OTUzZS1iYjNlLTQzZGEtYWE1My05MjEzNGY4ZWE5MjMiLCJleHAiOjE3NzI5NTkxMDJ9.kO8A2wCQ7nwzw0CB3XgH8IiZ77tfGPqGpa-mPi5zwhk
+order: 1772961049663
