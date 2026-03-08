@@ -13,9 +13,7 @@ from apscheduler.triggers.cron import CronTrigger
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
-from PIL import Image
 import cv2
-import numpy as np
 import smtplib
 from email.mime.text import MIMEText
 
@@ -23,7 +21,7 @@ from email.mime.text import MIMEText
 app = Flask(__name__)
 CORS(app)
 
-# Use absolute path for the database to avoid path issues
+# Database config
 basedir = os.path.abspath(os.path.dirname(__file__))
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'warranty.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -54,7 +52,7 @@ class Product(db.Model):
 
 # ---------------- CREATE DATABASE ----------------
 with app.app_context():
-    db.create_all()  # creates a fresh DB if none exists
+    db.create_all()
 
 # ---------------- HOME ----------------
 @app.route('/')
@@ -90,6 +88,29 @@ def login():
         })
     return jsonify({"message": "Invalid email or password"}), 401
 
+# ---------------- OCR FUNCTION ----------------
+def extract_text_from_bill(filepath):
+    try:
+        img = cv2.imread(filepath)
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        gray = cv2.GaussianBlur(gray, (5,5),0)
+        thresh = cv2.threshold(gray, 0, 255,
+                               cv2.THRESH_BINARY + cv2.THRESH_OTSU)[1]
+        text = pytesseract.image_to_string(thresh)
+        return text if text.strip() != "" else "No readable text found"
+    except Exception as e:
+        print("OCR ERROR:", e)
+        return "OCR failed"
+
+# ---------------- QR FUNCTION ----------------
+def generate_qr(product_id):
+    # QR points to frontend React route
+    frontend_url = f"http://127.0.0.1:3000/product/{product_id}"  # Replace with your frontend domain when deployed
+    path = f"qrcodes/product_{product_id}.png"
+    qr = qrcode.make(frontend_url)
+    qr.save(path)
+    return path
+
 # ---------------- ADD PRODUCT ----------------
 @app.route('/add_product', methods=['POST'])
 @jwt_required()
@@ -109,31 +130,16 @@ def add_product():
         expiry_date=expiry_dt.strftime("%Y-%m-%d"),
         user_id=user_id
     )
-
     db.session.add(product)
     db.session.commit()
+
     qr = generate_qr(product.id)
 
     return jsonify({
         "message": "Product added successfully",
+        "product_id": product.id,
         "qr_code": qr
     })
-
-# ---------------- OCR FUNCTION ----------------
-def extract_text_from_bill(filepath):
-    try:
-        img = cv2.imread(filepath)
-        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        gray = cv2.GaussianBlur(gray, (5,5),0)
-        thresh = cv2.threshold(gray, 0, 255,
-                               cv2.THRESH_BINARY + cv2.THRESH_OTSU)[1]
-        text = pytesseract.image_to_string(thresh)
-        if text.strip() == "":
-            return "No readable text found"
-        return text
-    except Exception as e:
-        print("OCR ERROR:", e)
-        return "OCR failed"
 
 # ---------------- UPLOAD BILL ----------------
 @app.route('/upload_bill', methods=['POST'])
@@ -145,6 +151,7 @@ def upload_bill():
     file = request.files['bill']
     if file.filename == "":
         return jsonify({"message": "No file selected"}), 400
+
     filename = secure_filename(file.filename)
     filepath = os.path.join("uploads", filename)
     file.save(filepath)
@@ -164,23 +171,23 @@ def upload_bill():
     )
     db.session.add(product)
     db.session.commit()
+
+    # Rename uploaded bill to predictable filename
+    bill_filename = f"product_{product.id}_bill.png"
+    os.rename(filepath, os.path.join("uploads", bill_filename))
+
     qr = generate_qr(product.id)
 
     return jsonify({
         "message": "Product created from bill successfully",
+        "product_id": product.id,
         "qr_code": qr,
-        "ocr_text": text
+        "ocr_text": text,
+        "bill_url": f"/uploads/{bill_filename}"
     })
 
-# ---------------- QR FUNCTION ----------------
-def generate_qr(product_id):
-    path = f"qrcodes/product_{product_id}.png"
-    qr = qrcode.make(product_id)
-    qr.save(path)
-    return path
-
-# ---------------- DASHBOARD ----------------
-@app.route('/dashboard')
+# ---------------- DASHBOARD API ----------------
+@app.route('/dashboard', methods=['GET'])
 @jwt_required()
 def dashboard():
     user_id = int(get_jwt_identity())
@@ -189,20 +196,61 @@ def dashboard():
     for p in products:
         today = datetime.today().date()
         expiry = datetime.strptime(p.expiry_date, "%Y-%m-%d").date()
-        days = (expiry - today).days
-        if days < 0:
+        days_remaining = (expiry - today).days
+        if days_remaining < 0:
             status = "Expired"
-        elif days <= 5:
+        elif days_remaining <= 5:
             status = "Expiring Soon"
         else:
             status = "Active"
+
+        bill_url = f"/uploads/product_{p.id}_bill.png"
+        qr_url = f"/qrcodes/product_{p.id}.png"
+
         data.append({
+            "product_id": p.id,
             "product_name": p.product_name,
+            "purchase_date": p.purchase_date,
             "expiry_date": p.expiry_date,
-            "days_remaining": days,
-            "status": status
+            "days_remaining": days_remaining,
+            "status": status,
+            "bill_url": bill_url,
+            "qr_url": qr_url
         })
     return jsonify(data)
+
+# ---------------- GET PRODUCT DETAILS (for QR scan) ----------------
+@app.route('/product/<int:product_id>', methods=['GET'])
+@jwt_required(optional=True)
+def get_product(product_id):
+    product = Product.query.get(product_id)
+    if not product:
+        return jsonify({"message": "Product not found"}), 404
+
+    today = datetime.today().date()
+    expiry = datetime.strptime(product.expiry_date, "%Y-%m-%d").date()
+    days_remaining = (expiry - today).days
+
+    if days_remaining < 0:
+        status = "Expired"
+    elif days_remaining <= 5:
+        status = "Expiring Soon"
+    else:
+        status = "Active"
+
+    bill_url = f"/uploads/product_{product.id}_bill.png"
+    qr_url = f"/qrcodes/product_{product.id}.png"
+
+    return jsonify({
+        "product_id": product.id,
+        "product_name": product.product_name,
+        "purchase_date": product.purchase_date,
+        "expiry_date": product.expiry_date,
+        "days_remaining": days_remaining,
+        "status": status,
+        "bill_url": bill_url,
+        "qr_url": qr_url
+    })
 
 # ---------------- EMAIL FUNCTION ----------------
 def send_email(to_email, subject, body):
@@ -229,7 +277,7 @@ def check_warranty():
             expiry = datetime.strptime(p.expiry_date, "%Y-%m-%d").date()
             days = (expiry - datetime.today().date()).days
             if days in [5, 3, 1, 0] and p.last_alert_sent != today_str:
-                user = db.session.get(User, p.user_id)  # SQLAlchemy 2.0 preferred
+                user = db.session.get(User, p.user_id)
                 subject = f"Warranty Expiry Reminder: {p.product_name}"
                 body = f"Hi {user.name},\n\nYour product '{p.product_name}' will expire in {days} days ({p.expiry_date}).\n\nPlease take necessary action."
                 send_email(user.email, subject, body)
