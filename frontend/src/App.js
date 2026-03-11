@@ -7,7 +7,6 @@ import Navbar from "./components/Navbar";
 import Register from "./pages/Register";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
-import AddProduct from "./pages/AddProduct";
 import UploadBill from "./pages/UploadBill";
 import ProductDetails from "./pages/ProductDetails";
 
@@ -17,15 +16,14 @@ function App() {
       <Navbar /> {/* Navbar always visible */}
 
       <Routes>
-        {/* Specific routes first */}
+        {/* Auth pages */}
         <Route path="/login" element={<Login />} />
+        <Route path="/" element={<Register />} />
+
+        {/* Main app */}
         <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/add-product" element={<AddProduct />} />
         <Route path="/upload-bill" element={<UploadBill />} />
         <Route path="/product/:id" element={<ProductDetails />} />
-
-        {/* Root / route last */}
-        <Route path="/" element={<Register />} />
       </Routes>
     </Router>
   );

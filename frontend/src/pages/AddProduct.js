@@ -47,44 +47,114 @@ function AddProduct() {
   };
 
   return (
-    <div style={{ maxWidth: "400px", margin: "20px auto", padding: "20px", border: "1px solid #ccc", borderRadius: "5px" }}>
-      <h2>Add Product</h2>
-      <form onSubmit={handleAddProduct} style={{ display: "flex", flexDirection: "column" }}>
-        <input
-          placeholder="Product Name"
-          value={productName}
-          onChange={(e) => setProductName(e.target.value)}
-          required
-          style={{ marginBottom: "10px", padding: "8px" }}
-        />
-        <input
-          placeholder="Purchase Date (YYYY-MM-DD)"
-          type="date"
-          value={purchaseDate}
-          onChange={(e) => setPurchaseDate(e.target.value)}
-          required
-          style={{ marginBottom: "10px", padding: "8px" }}
-        />
-        <input
-          placeholder="Warranty Days"
-          type="number"
-          value={warrantyDays}
-          onChange={(e) => setWarrantyDays(e.target.value)}
-          required
-          style={{ marginBottom: "10px", padding: "8px" }}
-        />
-        <button
-          type="submit"
-          style={{ padding: "10px", background: "#007bff", color: "#fff", border: "none", borderRadius: "3px" }}
-        >
-          Add Product
-        </button>
-      </form>
-      {message && (
-        <p style={{ marginTop: "10px", color: message.includes("successfully") ? "green" : "red" }}>
-          {message}
-        </p>
-      )}
+    <div style={{
+      minHeight: "100vh",
+      display: "flex",
+      justifyContent: "center",
+      alignItems: "center",
+      background: "linear-gradient(135deg, #667eea, #764ba2)",
+      fontFamily: "'Poppins', sans-serif",
+      padding: "20px"
+    }}>
+      <div style={{
+        width: "100%",
+        maxWidth: "400px",
+        padding: "40px",
+        borderRadius: "12px",
+        backgroundColor: "#fff",
+        boxShadow: "0 8px 30px rgba(0,0,0,0.2)",
+        textAlign: "center"
+      }}>
+        <h1 style={{ marginBottom: "25px", color: "#333" }}>Add Product</h1>
+
+        <form onSubmit={handleAddProduct} style={{ display: "flex", flexDirection: "column" }}>
+          <input
+            type="text"
+            placeholder="Product Name"
+            value={productName}
+            onChange={(e) => setProductName(e.target.value)}
+            required
+            style={{
+              marginBottom: "15px",
+              padding: "12px",
+              borderRadius: "8px",
+              border: "1px solid #ccc",
+              outline: "none",
+              fontSize: "1rem",
+              transition: "all 0.3s"
+            }}
+            onFocus={(e) => e.target.style.borderColor = "#764ba2"}
+            onBlur={(e) => e.target.style.borderColor = "#ccc"}
+          />
+
+          <input
+            type="date"
+            placeholder="Purchase Date"
+            value={purchaseDate}
+            onChange={(e) => setPurchaseDate(e.target.value)}
+            required
+            style={{
+              marginBottom: "15px",
+              padding: "12px",
+              borderRadius: "8px",
+              border: "1px solid #ccc",
+              outline: "none",
+              fontSize: "1rem",
+              transition: "all 0.3s"
+            }}
+            onFocus={(e) => e.target.style.borderColor = "#764ba2"}
+            onBlur={(e) => e.target.style.borderColor = "#ccc"}
+          />
+
+          <input
+            type="number"
+            placeholder="Warranty Days"
+            value={warrantyDays}
+            onChange={(e) => setWarrantyDays(e.target.value)}
+            required
+            style={{
+              marginBottom: "20px",
+              padding: "12px",
+              borderRadius: "8px",
+              border: "1px solid #ccc",
+              outline: "none",
+              fontSize: "1rem",
+              transition: "all 0.3s"
+            }}
+            onFocus={(e) => e.target.style.borderColor = "#764ba2"}
+            onBlur={(e) => e.target.style.borderColor = "#ccc"}
+          />
+
+          <button
+            type="submit"
+            style={{
+              padding: "12px",
+              borderRadius: "8px",
+              border: "none",
+              background: "linear-gradient(135deg, #667eea, #764ba2)",
+              color: "#fff",
+              fontWeight: "bold",
+              fontSize: "1rem",
+              cursor: "pointer",
+              transition: "transform 0.2s, box-shadow 0.2s"
+            }}
+            onMouseEnter={(e) => { e.target.style.transform = "scale(1.05)"; e.target.style.boxShadow = "0 6px 20px rgba(0,0,0,0.3)" }}
+            onMouseLeave={(e) => { e.target.style.transform = "scale(1)"; e.target.style.boxShadow = "none" }}
+          >
+            Add Product
+          </button>
+        </form>
+
+        {message && (
+          <p style={{
+            marginTop: "15px",
+            color: message.includes("successfully") ? "#28a745" : "#dc3545",
+            fontWeight: "bold"
+          }}>
+            {message}
+          </p>
+        )}
+      </div>
     </div>
   );
 }
