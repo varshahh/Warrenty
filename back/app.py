@@ -355,6 +355,63 @@ def uploaded_file(filename):
 def qr_file(filename):
     return send_from_directory('qrcodes', filename)
 
+# ---------------- UPDATE PRODUCT ----------------
+@app.route('/update_product/<int:product_id>', methods=['PUT'])
+@jwt_required()
+def update_product(product_id):
+
+    user_id = int(get_jwt_identity())
+
+    product = Product.query.get(product_id)
+
+    if not product:
+        return jsonify({"message": "Product not found"}), 404
+
+    if product.user_id != user_id:
+        return jsonify({"message": "Unauthorized"}), 403
+
+    data = request.get_json()
+
+    product_name = data.get("product_name")
+    purchase_date = data.get("purchase_date")
+    warranty_days = int(data.get("warranty_period_days"))
+
+    purchase_dt = datetime.strptime(purchase_date, "%Y-%m-%d")
+
+    expiry_dt = purchase_dt + timedelta(days=warranty_days)
+
+    product.product_name = product_name
+    product.purchase_date = purchase_date
+    product.warranty_period = str(warranty_days) + " days"
+    product.expiry_date = expiry_dt.strftime("%Y-%m-%d")
+
+    db.session.commit()
+
+    return jsonify({
+        "message": "Product updated successfully"
+    })    
+
+# ---------------- DELETE PRODUCT ----------------
+@app.route('/delete_product/<int:product_id>', methods=['DELETE'])
+@jwt_required()
+def delete_product(product_id):
+
+    user_id = int(get_jwt_identity())
+
+    product = Product.query.get(product_id)
+
+    if not product:
+        return jsonify({"message": "Product not found"}), 404
+
+    if product.user_id != user_id:
+        return jsonify({"message": "Unauthorized"}), 403
+
+    db.session.delete(product)
+    db.session.commit()
+
+    return jsonify({
+        "message": "Product deleted successfully"
+    })
 
 # ---------------- RUN ----------------
 if __name__ == "__main__":
