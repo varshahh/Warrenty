@@ -1,4 +1,3 @@
-// src/pages/Register.js
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -7,13 +6,17 @@ function Register() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(false);
+
   const navigate = useNavigate();
 
   const handleRegister = async (e) => {
     e.preventDefault();
+    setLoading(true);
+    setMessage("");
 
     try {
-      const res = await fetch("http://192.168.1.4:5000/register", {
+      const res = await fetch("http://127.0.0.1:5000/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, email, password }),
@@ -23,14 +26,19 @@ function Register() {
 
       if (res.ok) {
         setMessage("Registration successful! Redirecting to Login...");
-        setTimeout(() => navigate("/login"), 1000);
+
+        setTimeout(() => {
+          navigate("/login");
+        }, 1200);
       } else {
-        setMessage(data.message || "Registration failed. Please try again.");
+        setMessage(data.message || "Registration failed.");
       }
     } catch (error) {
       console.error("Registration error:", error);
-      setMessage("Server error. Please try again later.");
+      setMessage("Server error. Please try again.");
     }
+
+    setLoading(false);
   };
 
   return (
@@ -39,7 +47,7 @@ function Register() {
       display: "flex",
       justifyContent: "center",
       alignItems: "center",
-      background: "linear-gradient(135deg, #667eea, #764ba2)"
+      background: "linear-gradient(135deg,#667eea,#764ba2)"
     }}>
       <div style={{
         width: "100%",
@@ -50,83 +58,53 @@ function Register() {
         boxShadow: "0 8px 30px rgba(0,0,0,0.2)",
         textAlign: "center"
       }}>
-        <h1 style={{ marginBottom: "25px", color: "#333", fontFamily: "'Poppins', sans-serif" }}>
-          Create Account
-        </h1>
+        <h1 style={{ marginBottom: "25px", color: "#333" }}>Create Account</h1>
 
         <form onSubmit={handleRegister} style={{ display: "flex", flexDirection: "column" }}>
           <input
             type="text"
             placeholder="Name"
             value={name}
-            onChange={(e) => setName(e.target.value)}
             required
-            style={{
-              marginBottom: "15px",
-              padding: "12px",
-              borderRadius: "8px",
-              border: "1px solid #ccc",
-              outline: "none",
-              fontSize: "1rem",
-              transition: "all 0.3s",
-            }}
-            onFocus={(e) => e.target.style.borderColor = "#764ba2"}
-            onBlur={(e) => e.target.style.borderColor = "#ccc"}
+            disabled={loading}
+            onChange={(e) => setName(e.target.value)}
+            style={{ marginBottom: "15px", padding: "12px", borderRadius: "8px", border: "1px solid #ccc" }}
           />
 
           <input
             type="email"
             placeholder="Email"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
             required
-            style={{
-              marginBottom: "15px",
-              padding: "12px",
-              borderRadius: "8px",
-              border: "1px solid #ccc",
-              outline: "none",
-              fontSize: "1rem",
-              transition: "all 0.3s",
-            }}
-            onFocus={(e) => e.target.style.borderColor = "#764ba2"}
-            onBlur={(e) => e.target.style.borderColor = "#ccc"}
+            disabled={loading}
+            onChange={(e) => setEmail(e.target.value)}
+            style={{ marginBottom: "15px", padding: "12px", borderRadius: "8px", border: "1px solid #ccc" }}
           />
 
           <input
             type="password"
             placeholder="Password"
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
             required
-            style={{
-              marginBottom: "20px",
-              padding: "12px",
-              borderRadius: "8px",
-              border: "1px solid #ccc",
-              outline: "none",
-              fontSize: "1rem",
-              transition: "all 0.3s",
-            }}
-            onFocus={(e) => e.target.style.borderColor = "#764ba2"}
-            onBlur={(e) => e.target.style.borderColor = "#ccc"}
+            disabled={loading}
+            onChange={(e) => setPassword(e.target.value)}
+            style={{ marginBottom: "20px", padding: "12px", borderRadius: "8px", border: "1px solid #ccc" }}
           />
 
-          <button type="submit" style={{
-            padding: "12px",
-            borderRadius: "8px",
-            border: "none",
-            background: "linear-gradient(135deg, #667eea, #764ba2)",
-            color: "#fff",
-            fontWeight: "bold",
-            fontSize: "1rem",
-            cursor: "pointer",
-            transition: "transform 0.2s, box-shadow 0.2s"
-          }}
-          onMouseEnter={(e)=>{e.target.style.transform="scale(1.05)"; e.target.style.boxShadow="0 6px 20px rgba(0,0,0,0.3)"}}
-          onMouseLeave={(e)=>{e.target.style.transform="scale(1)"; e.target.style.boxShadow="none"}}
+          <button
+            type="submit"
+            disabled={loading}
+            style={{
+              padding: "12px",
+              borderRadius: "8px",
+              border: "none",
+              background: "linear-gradient(135deg,#667eea,#764ba2)",
+              color: "#fff",
+              fontWeight: "bold",
+              cursor: loading ? "not-allowed" : "pointer"
+            }}
           >
-            Register
+            {loading ? "Creating account..." : "Register"}
           </button>
         </form>
 
@@ -140,8 +118,14 @@ function Register() {
           </p>
         )}
 
-        <p style={{ marginTop: "15px", fontSize: "0.9rem", color: "#666" }}>
-          Already have an account? <span style={{color:"#764ba2", cursor:"pointer"}} onClick={()=>navigate("/login")}>Login</span>
+        <p style={{ marginTop: "15px", fontSize: "0.9rem" }}>
+          Already have an account?{" "}
+          <span
+            style={{ color: "#764ba2", cursor: "pointer", fontWeight: "bold" }}
+            onClick={() => navigate("/login")}
+          >
+            Login
+          </span>
         </p>
       </div>
     </div>

@@ -1,87 +1,47 @@
-// src/components/Navbar.js
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import "./Navbar.css";
 
 function Navbar() {
   const navigate = useNavigate();
-  const token = localStorage.getItem("token");
+
+  // Track token state to re-render Navbar dynamically
+  const [token, setToken] = useState(() => localStorage.getItem("token"));
+
+  // Listen to storage changes (if user logs in/out in another tab)
+  useEffect(() => {
+    const handleStorage = () => setToken(localStorage.getItem("token"));
+    window.addEventListener("storage", handleStorage);
+    return () => window.removeEventListener("storage", handleStorage);
+  }, []);
 
   const handleLogout = () => {
     localStorage.removeItem("token");
+    setToken(null); 
     navigate("/login");
   };
 
-  const linkStyle = {
-    textDecoration: "none",
-    color: "white",
-    fontWeight: "500",
-    padding: "8px 12px",
-    borderRadius: "6px",
-    transition: "0.3s"
-  };
-
   return (
-    <nav
-      style={{
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        padding: "15px 40px",
-        background: "linear-gradient(90deg,#4facfe,#00f2fe)",
-        boxShadow: "0px 4px 12px rgba(0,0,0,0.2)",
-        marginBottom: "30px",
-        fontFamily: "Arial, sans-serif"
-      }}
-    >
-      
-      {/* Logo / Title */}
+    <nav className="navbar">
       <h2
-        style={{
-          color: "white",
-          margin: 0,
-          fontWeight: "bold",
-          letterSpacing: "1px"
-        }}
+        className="navbar-logo"
+        onClick={() => navigate("/dashboard")}
+        style={{ cursor: "pointer" }}
       >
         Smart Warranty
       </h2>
 
-      {/* Navigation Links */}
-      <div style={{ display: "flex", gap: "20px", alignItems: "center" }}>
-        
-        <Link to="/" style={linkStyle}>
-          Register
-        </Link>
-
-        <Link to="/login" style={linkStyle}>
-          Login
-        </Link>
-
-        {token && (
+      <div className="navbar-links">
+        {!token ? (
           <>
-            <Link to="/dashboard" style={linkStyle}>
-              Dashboard
-            </Link>
-
-            <Link to="/upload-bill" style={linkStyle}>
-              Upload Bill
-            </Link>
-
-            <button
-              onClick={handleLogout}
-              style={{
-                background: "#ff4d4d",
-                border: "none",
-                color: "white",
-                padding: "8px 16px",
-                borderRadius: "6px",
-                cursor: "pointer",
-                fontWeight: "500",
-                transition: "0.3s"
-              }}
-            >
-              Logout
-            </button>
+            <Link to="/register" className="nav-link">Register</Link>
+            <Link to="/login" className="nav-link">Login</Link>
+          </>
+        ) : (
+          <>
+            <Link to="/dashboard" className="nav-link">Dashboard</Link>
+            <Link to="/upload-bill" className="nav-link">Upload Bill</Link>
+            <button onClick={handleLogout} className="nav-button">Logout</button>
           </>
         )}
       </div>

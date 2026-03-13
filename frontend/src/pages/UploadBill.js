@@ -1,28 +1,45 @@
-// src/pages/UploadBill.js
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 function UploadBill() {
+  const navigate = useNavigate();
+
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState(null);
   const [message, setMessage] = useState("");
   const [uploading, setUploading] = useState(false);
+  const [dragging, setDragging] = useState(false);
 
+  // ---------------- HANDLE FILE CHANGE ----------------
   const handleFileChange = (selectedFile) => {
-    setFile(selectedFile);
+    if (!selectedFile) return;
 
-    if (selectedFile) {
-      const previewURL = URL.createObjectURL(selectedFile);
-      setPreview(previewURL);
+    // Check file type
+    if (!selectedFile.type.startsWith("image/")) {
+      setMessage("Only image files are allowed.");
+      return;
     }
+
+    setFile(selectedFile);
+    setPreview(URL.createObjectURL(selectedFile));
+    setMessage("");
   };
 
+  // ---------------- REMOVE FILE ----------------
+  const removeFile = () => {
+    setFile(null);
+    setPreview(null);
+    setMessage("");
+  };
+
+  // ---------------- HANDLE UPLOAD ----------------
   const handleUpload = async (e) => {
     e.preventDefault();
 
     const token = localStorage.getItem("token");
 
     if (!token) {
-      setMessage("Please login first!");
+      setMessage("Please login first.");
       return;
     }
 
@@ -38,31 +55,36 @@ function UploadBill() {
       setUploading(true);
       setMessage("");
 
-      const res = await fetch("http://192.168.1.4:5000/upload_bill", {
+      const res = await fetch("http://127.0.0.1:5000/upload_bill", {
         method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
+        headers: {
+          Authorization: `Bearer ${token}`, // Do NOT set Content-Type manually
+        },
         body: formData,
       });
 
-      const data = await res.json();
+      const response = await res.json();
 
       if (res.ok) {
-        setMessage("Bill uploaded successfully! Product added to dashboard.");
+        setMessage(response.message || "✅ Bill uploaded successfully!");
         setFile(null);
         setPreview(null);
+        setTimeout(() => navigate("/dashboard"), 1500);
       } else {
-        setMessage(data.message || "Upload failed.");
+        setMessage(response.error || "Upload failed.");
       }
     } catch (error) {
       console.error("Upload error:", error);
       setMessage("Server error. Please try again.");
+    } finally {
+      setUploading(false);
     }
-
-    setUploading(false);
   };
 
+  // ---------------- HANDLE DRAG & DROP ----------------
   const handleDrop = (e) => {
     e.preventDefault();
+    setDragging(false);
     const droppedFile = e.dataTransfer.files[0];
     handleFileChange(droppedFile);
   };
@@ -75,7 +97,6 @@ function UploadBill() {
         justifyContent: "center",
         alignItems: "center",
         background: "linear-gradient(135deg,#667eea,#764ba2)",
-        fontFamily: "'Poppins', sans-serif",
         padding: "20px",
       }}
     >
@@ -95,29 +116,34 @@ function UploadBill() {
         <form onSubmit={handleUpload}>
           {/* Drag & Drop Area */}
           <div
-            onDragOver={(e) => e.preventDefault()}
+            onDragOver={(e) => {
+              e.preventDefault();
+              setDragging(true);
+            }}
+            onDragLeave={() => setDragging(false)}
             onDrop={handleDrop}
             style={{
-              border: "2px dashed #aaa",
+              border: dragging ? "2px solid #4facfe" : "2px dashed #aaa",
               borderRadius: "10px",
               padding: "30px",
               marginBottom: "20px",
-              background: "#f9f9f9",
+              background: dragging ? "#eef5ff" : "#f9f9f9",
+              transition: "0.2s",
               cursor: "pointer",
             }}
           >
-            <p style={{ marginBottom: "10px" }}>
-              Drag & Drop Bill Image Here
+            <p style={{ marginBottom: "10px", fontWeight: "500" }}>
+              Drag & Drop Bill Image or click to select
             </p>
-
             <input
               type="file"
               accept="image/*"
               onChange={(e) => handleFileChange(e.target.files[0])}
+              style={{ cursor: "pointer" }}
             />
           </div>
 
-          {/* Image Preview */}
+          {/* Preview */}
           {preview && (
             <div style={{ marginBottom: "20px" }}>
               <p style={{ fontWeight: "bold" }}>Preview</p>
@@ -130,9 +156,26 @@ function UploadBill() {
                   boxShadow: "0 6px 20px rgba(0,0,0,0.2)",
                 }}
               />
+              <p style={{ fontSize: "14px", marginTop: "6px" }}>{file.name}</p>
+              <button
+                type="button"
+                onClick={removeFile}
+                style={{
+                  marginTop: "8px",
+                  padding: "6px 12px",
+                  background: "#dc3545",
+                  color: "#fff",
+                  border: "none",
+                  borderRadius: "6px",
+                  cursor: "pointer",
+                }}
+              >
+                Remove
+              </button>
             </div>
           )}
 
+          {/* Upload Button */}
           <button
             type="submit"
             disabled={uploading}
@@ -146,7 +189,6 @@ function UploadBill() {
               fontWeight: "bold",
               fontSize: "16px",
               cursor: "pointer",
-              transition: "0.2s",
             }}
           >
             {uploading ? "Uploading..." : "Upload Bill"}
@@ -159,9 +201,10 @@ function UploadBill() {
             style={{
               marginTop: "15px",
               fontWeight: "bold",
-              color: message.includes("success")
-                ? "#28a745"
-                : "#dc3545",
+              color:
+                message.includes("success") || message.includes("✅")
+                  ? "#28a745"
+                  : "#dc3545",
             }}
           >
             {message}

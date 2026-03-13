@@ -1,4 +1,3 @@
-// src/pages/Login.js
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -6,13 +5,17 @@ function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(false);
+
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    setLoading(true);
+    setMessage("");
 
     try {
-      const res = await fetch("http://192.168.1.4:5000/login", {
+      const res = await fetch("http://127.0.0.1:5000/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
@@ -23,14 +26,18 @@ function Login() {
       if (res.ok && data.access_token) {
         localStorage.setItem("token", data.access_token);
         setMessage("Login successful! Redirecting...");
+        
+        // ✅ Navigate without full page reload
         setTimeout(() => navigate("/dashboard"), 1000);
       } else {
         setMessage(data.message || "Invalid email or password.");
       }
     } catch (error) {
       console.error("Login error:", error);
-      setMessage("Server error. Please try again later.");
+      setMessage("Server error. Please try again.");
     }
+
+    setLoading(false);
   };
 
   return (
@@ -39,7 +46,7 @@ function Login() {
       display: "flex",
       justifyContent: "center",
       alignItems: "center",
-      background: "linear-gradient(135deg, #667eea, #764ba2)"
+      background: "linear-gradient(135deg,#667eea,#764ba2)"
     }}>
       <div style={{
         width: "100%",
@@ -50,64 +57,43 @@ function Login() {
         boxShadow: "0 8px 30px rgba(0,0,0,0.2)",
         textAlign: "center"
       }}>
-        <h1 style={{ marginBottom: "25px", color: "#333", fontFamily: "'Poppins', sans-serif" }}>
-          Smart Warranty
-        </h1>
+        <h1 style={{ marginBottom: "25px", color: "#333" }}>Smart Warranty</h1>
 
         <form onSubmit={handleLogin} style={{ display: "flex", flexDirection: "column" }}>
           <input
             type="email"
             placeholder="Email"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
             required
-            style={{
-              marginBottom: "15px",
-              padding: "12px",
-              borderRadius: "8px",
-              border: "1px solid #ccc",
-              outline: "none",
-              fontSize: "1rem",
-              transition: "all 0.3s",
-            }}
-            onFocus={(e) => e.target.style.borderColor = "#764ba2"}
-            onBlur={(e) => e.target.style.borderColor = "#ccc"}
+            disabled={loading}
+            onChange={(e) => setEmail(e.target.value)}
+            style={{ marginBottom: "15px", padding: "12px", borderRadius: "8px", border: "1px solid #ccc" }}
           />
 
           <input
             type="password"
             placeholder="Password"
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
             required
-            style={{
-              marginBottom: "20px",
-              padding: "12px",
-              borderRadius: "8px",
-              border: "1px solid #ccc",
-              outline: "none",
-              fontSize: "1rem",
-              transition: "all 0.3s",
-            }}
-            onFocus={(e) => e.target.style.borderColor = "#764ba2"}
-            onBlur={(e) => e.target.style.borderColor = "#ccc"}
+            disabled={loading}
+            onChange={(e) => setPassword(e.target.value)}
+            style={{ marginBottom: "20px", padding: "12px", borderRadius: "8px", border: "1px solid #ccc" }}
           />
 
-          <button type="submit" style={{
-            padding: "12px",
-            borderRadius: "8px",
-            border: "none",
-            background: "linear-gradient(135deg, #667eea, #764ba2)",
-            color: "#fff",
-            fontWeight: "bold",
-            fontSize: "1rem",
-            cursor: "pointer",
-            transition: "transform 0.2s, box-shadow 0.2s"
-          }}
-          onMouseEnter={(e)=>{e.target.style.transform="scale(1.05)"; e.target.style.boxShadow="0 6px 20px rgba(0,0,0,0.3)"}}
-          onMouseLeave={(e)=>{e.target.style.transform="scale(1)"; e.target.style.boxShadow="none"}}
+          <button
+            type="submit"
+            disabled={loading}
+            style={{
+              padding: "12px",
+              borderRadius: "8px",
+              border: "none",
+              background: "linear-gradient(135deg,#667eea,#764ba2)",
+              color: "#fff",
+              fontWeight: "bold",
+              cursor: "pointer"
+            }}
           >
-            Login
+            {loading ? "Logging in..." : "Login"}
           </button>
         </form>
 
@@ -121,8 +107,14 @@ function Login() {
           </p>
         )}
 
-        <p style={{ marginTop: "15px", fontSize: "0.9rem", color: "#666" }}>
-          Don't have an account? <span style={{color:"#764ba2", cursor:"pointer"}}>Register</span>
+        <p style={{ marginTop: "15px", fontSize: "0.9rem" }}>
+          Don't have an account?{" "}
+          <span
+            style={{ color: "#764ba2", cursor: "pointer", fontWeight: "bold" }}
+            onClick={() => navigate("/register")}
+          >
+            Register
+          </span>
         </p>
       </div>
     </div>

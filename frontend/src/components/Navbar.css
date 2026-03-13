@@ -1,0 +1,95 @@
+/* src/components/Navbar.css */
+
+/* Navbar container */
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 40px;
+  background: linear-gradient(90deg, #4facfe, #00f2fe);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+  font-family: Arial, sans-serif;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background-clip: padding-box; /* prevents shadow bleed */
+}
+
+/* Logo */
+.navbar-logo {
+  color: white;
+  margin: 0;
+  font-weight: bold;
+  letter-spacing: 1px;
+  font-size: 20px;
+  transition: transform 0.25s ease;
+  cursor: pointer;
+}
+
+.navbar-logo:hover,
+.navbar-logo:focus {
+  transform: scale(1.05);
+  outline: none; /* improves focus styling */
+}
+
+/* Links container */
+.navbar-links {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap; /* prevents overflow on small screens */
+}
+
+/* Navigation links */
+.nav-link {
+  text-decoration: none;
+  color: white;
+  font-weight: 500;
+  padding: 8px 14px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.15);
+  transition: all 0.25s ease;
+}
+
+.nav-link:hover,
+.nav-link:focus {
+  background: rgba(255, 255, 255, 0.35);
+  transform: translateY(-2px);
+  outline: none; /* keyboard navigation */
+}
+
+/* Logout button */
+.nav-button {
+  background: #ff4d4d;
+  border: none;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.25s ease;
+}
+
+.nav-button:hover,
+.nav-button:focus {
+  background: #ff1a1a;
+  transform: translateY(-2px);
+  outline: none; /* keyboard navigation */
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .navbar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 15px 20px;
+  }
+
+  .navbar-links {
+    flex-wrap: wrap;
+    width: 100%;
+    justify-content: flex-start;
+    gap: 12px;
+  }
+}
