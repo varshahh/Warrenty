@@ -1,6 +1,12 @@
 // src/App.js
-import React from "react";
-import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+  Outlet
+} from "react-router-dom";
 
 // Components
 import Navbar from "./components/Navbar";
@@ -12,51 +18,87 @@ import Dashboard from "./pages/Dashboard";
 import UploadBill from "./pages/UploadBill";
 import ProductDetails from "./pages/ProductDetails";
 import EditProduct from "./pages/EditProduct";
+import AddProduct from "./pages/AddProduct"; // ✅ ADDED
 
-// 🔒 Protected Route
+
+// ---------------- PROTECTED ROUTE ----------------
 function ProtectedRoute() {
   const token = localStorage.getItem("token");
-  if (!token) return <Navigate to="/login" replace />;
-  return <Outlet />; // Render nested routes
+  return token ? <Outlet /> : <Navigate to="/login" replace />;
 }
 
-// 🔓 Public Route
+// ---------------- PUBLIC ROUTE ----------------
 function PublicRoute() {
   const token = localStorage.getItem("token");
-  if (token) return <Navigate to="/dashboard" replace />;
-  return <Outlet />; // Render nested routes
+  return token ? <Navigate to="/dashboard" replace /> : <Outlet />;
 }
 
 function App() {
-  const token = localStorage.getItem("token");
+
+  const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem("token"));
+
+  // ✅ Update navbar when login/logout happens
+  useEffect(() => {
+    const checkAuth = () => {
+      setIsLoggedIn(!!localStorage.getItem("token"));
+    };
+
+    window.addEventListener("storage", checkAuth);
+    window.addEventListener("focus", checkAuth);
+
+    return () => {
+      window.removeEventListener("storage", checkAuth);
+      window.removeEventListener("focus", checkAuth);
+    };
+  }, []);
 
   return (
+
     <Router>
-      {/* Show Navbar only when logged in */}
-      {token && <Navbar />}
+
+      {/* Navbar only when logged in */}
+      {isLoggedIn && <Navbar />}
 
       <Routes>
-        {/* Default route */}
-        <Route path="/" element={token ? <Navigate to="/dashboard" /> : <Navigate to="/login" />} />
 
-        {/* Public routes */}
+        {/* ROOT REDIRECT */}
+        <Route
+          path="/"
+          element={
+            isLoggedIn
+              ? <Navigate to="/dashboard" replace />
+              : <Navigate to="/login" replace />
+          }
+        />
+
+        {/* PUBLIC ROUTES */}
         <Route element={<PublicRoute />}>
           <Route path="/register" element={<Register />} />
           <Route path="/login" element={<Login />} />
         </Route>
 
-        {/* Protected routes */}
+        {/* PROTECTED ROUTES */}
         <Route element={<ProtectedRoute />}>
+
           <Route path="/dashboard" element={<Dashboard />} />
+
           <Route path="/upload-bill" element={<UploadBill />} />
+
+          <Route path="/add-product" element={<AddProduct />} /> {/* ✅ NEW */}
+
           <Route path="/product/:id" element={<ProductDetails />} />
+
           <Route path="/edit-product/:id" element={<EditProduct />} />
+
         </Route>
 
-        {/* Catch-all route */}
+        {/* FALLBACK */}
         <Route path="*" element={<Navigate to="/" replace />} />
+
       </Routes>
+
     </Router>
+
   );
 }
 

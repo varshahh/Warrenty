@@ -1,52 +1,98 @@
+// src/components/Navbar.js
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "./Navbar.css";
 
 function Navbar() {
+
   const navigate = useNavigate();
 
-  // Track token state to re-render Navbar dynamically
-  const [token, setToken] = useState(() => localStorage.getItem("token"));
+  // ✅ Track auth state properly
+  const [isLoggedIn, setIsLoggedIn] = useState(
+    !!localStorage.getItem("token")
+  );
 
-  // Listen to storage changes (if user logs in/out in another tab)
+  // ✅ Sync across tabs + internal updates
   useEffect(() => {
-    const handleStorage = () => setToken(localStorage.getItem("token"));
-    window.addEventListener("storage", handleStorage);
-    return () => window.removeEventListener("storage", handleStorage);
+
+    const syncAuth = () => {
+      setIsLoggedIn(!!localStorage.getItem("token"));
+    };
+
+    // listen for changes from other tabs
+    window.addEventListener("storage", syncAuth);
+
+    // also check when component mounts (important fix)
+    syncAuth();
+
+    return () => window.removeEventListener("storage", syncAuth);
+
   }, []);
 
+  // ✅ Logout
   const handleLogout = () => {
+
     localStorage.removeItem("token");
-    setToken(null); 
+
+    // force state update
+    setIsLoggedIn(false);
+
+    // redirect
     navigate("/login");
+
   };
 
   return (
+
     <nav className="navbar">
+
+      {/* LOGO */}
       <h2
         className="navbar-logo"
-        onClick={() => navigate("/dashboard")}
+        onClick={() => navigate(isLoggedIn ? "/dashboard" : "/login")}
         style={{ cursor: "pointer" }}
       >
         Smart Warranty
       </h2>
 
       <div className="navbar-links">
-        {!token ? (
+
+        {!isLoggedIn ? (
+
           <>
-            <Link to="/register" className="nav-link">Register</Link>
-            <Link to="/login" className="nav-link">Login</Link>
+            <Link to="/register" className="nav-link">
+              Register
+            </Link>
+
+            <Link to="/login" className="nav-link">
+              Login
+            </Link>
           </>
+
         ) : (
+
           <>
-            <Link to="/dashboard" className="nav-link">Dashboard</Link>
-            <Link to="/upload-bill" className="nav-link">Upload Bill</Link>
-            <button onClick={handleLogout} className="nav-button">Logout</button>
+            <Link to="/dashboard" className="nav-link">
+              Dashboard
+            </Link>
+
+            <Link to="/upload-bill" className="nav-link">
+              Add Product
+            </Link>
+
+            <button onClick={handleLogout} className="nav-button">
+              Logout
+            </button>
           </>
+
         )}
+
       </div>
+
     </nav>
+
   );
+
 }
 
 export default Navbar;

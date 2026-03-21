@@ -2,20 +2,28 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 
+const BASE_URL = "http://127.0.0.1:5000";
+
 function EditProduct() {
+
   const { id } = useParams();
   const navigate = useNavigate();
 
   const [productName, setProductName] = useState("");
   const [warrantyDays, setWarrantyDays] = useState("");
   const [purchaseDate, setPurchaseDate] = useState("");
+
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
 
   // ---------------- FETCH PRODUCT ----------------
   useEffect(() => {
+
     const fetchProduct = async () => {
+
       const token = localStorage.getItem("token");
+
       if (!token) {
         alert("Please login first");
         navigate("/login");
@@ -23,76 +31,114 @@ function EditProduct() {
       }
 
       try {
-        const res = await fetch(`http://127.0.0.1:5000/products/${id}`, {
+
+        const res = await fetch(`${BASE_URL}/products/${id}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
+
         const data = await res.json();
 
         if (res.ok) {
-          setProductName(data.name || "");
+
+          setProductName(data.product_name || "");
           setPurchaseDate(data.purchase_date || "");
 
-          // Calculate warranty days from expiry - purchase
-          if (data.expiry_date && data.purchase_date) {
-            const diff =
-              (new Date(data.expiry_date) - new Date(data.purchase_date)) /
-              (1000 * 60 * 60 * 24);
-            setWarrantyDays(diff);
-          } else {
-            setWarrantyDays("");
-          }
+          // ✅ FIX: ensure number type
+          setWarrantyDays(data.warranty_days ? Number(data.warranty_days) : 365);
+
         } else {
+
           setMessage(data.message || "Failed to fetch product.");
+
         }
-      } catch (error) {
-        console.error("Error fetching product:", error);
+
+      } catch (err) {
+
+        console.error(err);
         setMessage("Server error. Please try again.");
+
       } finally {
+
         setLoading(false);
+
       }
+
     };
 
     fetchProduct();
+
   }, [id, navigate]);
 
   // ---------------- UPDATE PRODUCT ----------------
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    const token = localStorage.getItem("token");
-    if (!token) return;
 
-    if (!productName || !warrantyDays || !purchaseDate) {
+    e.preventDefault();
+
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      setMessage("Please login first.");
+      return;
+    }
+
+    if (!productName.trim() || !purchaseDate || !warrantyDays) {
       setMessage("Please fill all fields.");
       return;
     }
 
+    if (Number(warrantyDays) <= 0) {
+      setMessage("Warranty days must be greater than 0.");
+      return;
+    }
+
     try {
-      const res = await fetch(`http://127.0.0.1:5000/edit_product/${id}`, {
+
+      setSaving(true);
+      setMessage("");
+
+      const res = await fetch(`${BASE_URL}/edit_product/${id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          product_name: productName,
-          purchase_date: purchaseDate,
-          warranty_days: Number(warrantyDays), // ✅ Correct field name
+          product_name: productName.trim(),
+          purchase_date: purchaseDate, // ✅ already correct format (YYYY-MM-DD)
+          warranty_days: Number(warrantyDays), // ✅ ensure number
         }),
       });
 
       const data = await res.json();
+
       if (res.ok) {
+
         setMessage("✅ Product updated successfully!");
-        setTimeout(() => navigate("/dashboard"), 1200);
+
+        setTimeout(() => {
+          navigate("/dashboard");
+        }, 1200);
+
       } else {
+
         setMessage(data.message || "Update failed.");
+
       }
-    } catch (error) {
-      console.error("Update error:", error);
+
+    } catch (err) {
+
+      console.error(err);
       setMessage("Server error. Please try again.");
+
+    } finally {
+
+      setSaving(false);
+
     }
+
   };
 
+  // ---------------- LOADING ----------------
   if (loading)
     return (
       <h2 style={{ textAlign: "center", marginTop: "80px" }}>
@@ -100,60 +146,32 @@ function EditProduct() {
       </h2>
     );
 
+  // ---------------- UI ----------------
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        background: "linear-gradient(135deg,#667eea,#764ba2)",
-        padding: "20px",
-      }}
-    >
-      <div
-        style={{
-          width: "100%",
-          maxWidth: "420px",
-          padding: "40px",
-          borderRadius: "12px",
-          backgroundColor: "#fff",
-          boxShadow: "0 10px 25px rgba(0,0,0,0.2)",
-          textAlign: "center",
-        }}
-      >
+
+    <div style={pageStyle}>
+
+      <div style={cardStyle}>
+
         <h2 style={{ marginBottom: "25px" }}>Edit Product</h2>
 
-        <form
-          onSubmit={handleSubmit}
-          style={{ display: "flex", flexDirection: "column" }}
-        >
+        <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column" }}>
+
           <input
             type="text"
             placeholder="Product Name"
             value={productName}
             onChange={(e) => setProductName(e.target.value)}
             required
-            style={{
-              marginBottom: "15px",
-              padding: "12px",
-              borderRadius: "8px",
-              border: "1px solid #ccc",
-            }}
+            style={inputStyle}
           />
 
           <input
             type="date"
-            placeholder="Purchase Date"
             value={purchaseDate}
             onChange={(e) => setPurchaseDate(e.target.value)}
             required
-            style={{
-              marginBottom: "15px",
-              padding: "12px",
-              borderRadius: "8px",
-              border: "1px solid #ccc",
-            }}
+            style={inputStyle}
           />
 
           <input
@@ -162,29 +180,14 @@ function EditProduct() {
             value={warrantyDays}
             onChange={(e) => setWarrantyDays(e.target.value)}
             required
-            min={1}
-            style={{
-              marginBottom: "20px",
-              padding: "12px",
-              borderRadius: "8px",
-              border: "1px solid #ccc",
-            }}
+            min="1"
+            style={inputStyle}
           />
 
-          <button
-            type="submit"
-            style={{
-              padding: "12px",
-              borderRadius: "8px",
-              border: "none",
-              background: "linear-gradient(135deg,#764ba2,#667eea)",
-              color: "#fff",
-              fontWeight: "bold",
-              cursor: "pointer",
-            }}
-          >
-            Update Product
+          <button type="submit" disabled={saving} style={buttonStyle}>
+            {saving ? "Updating..." : "Update Product"}
           </button>
+
         </form>
 
         {message && (
@@ -192,15 +195,56 @@ function EditProduct() {
             style={{
               marginTop: "15px",
               fontWeight: "bold",
-              color: message.includes("successfully") ? "#28a745" : "#dc3545",
+              color: message.includes("success") ? "#28a745" : "#dc3545",
             }}
           >
             {message}
           </p>
         )}
+
       </div>
+
     </div>
+
   );
+
 }
+
+// ---------------- STYLES ----------------
+const pageStyle = {
+  minHeight: "100vh",
+  display: "flex",
+  justifyContent: "center",
+  alignItems: "center",
+  background: "linear-gradient(135deg,#667eea,#764ba2)",
+  padding: "20px",
+};
+
+const cardStyle = {
+  width: "100%",
+  maxWidth: "420px",
+  padding: "40px",
+  borderRadius: "12px",
+  backgroundColor: "#fff",
+  boxShadow: "0 10px 25px rgba(0,0,0,0.2)",
+  textAlign: "center",
+};
+
+const inputStyle = {
+  marginBottom: "15px",
+  padding: "12px",
+  borderRadius: "8px",
+  border: "1px solid #ccc",
+};
+
+const buttonStyle = {
+  padding: "12px",
+  borderRadius: "8px",
+  border: "none",
+  background: "linear-gradient(135deg,#764ba2,#667eea)",
+  color: "#fff",
+  fontWeight: "bold",
+  cursor: "pointer",
+};
 
 export default EditProduct;
