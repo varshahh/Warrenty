@@ -5,7 +5,6 @@ import { useParams, useNavigate } from "react-router-dom";
 const BASE_URL = "http://127.0.0.1:5000";
 
 function EditProduct() {
-
   const { id } = useParams();
   const navigate = useNavigate();
 
@@ -19,9 +18,7 @@ function EditProduct() {
 
   // ---------------- FETCH PRODUCT ----------------
   useEffect(() => {
-
     const fetchProduct = async () => {
-
       const token = localStorage.getItem("token");
 
       if (!token) {
@@ -31,7 +28,6 @@ function EditProduct() {
       }
 
       try {
-
         const res = await fetch(`${BASE_URL}/products/${id}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -39,39 +35,29 @@ function EditProduct() {
         const data = await res.json();
 
         if (res.ok) {
-
           setProductName(data.product_name || "");
           setPurchaseDate(data.purchase_date || "");
 
-          // ✅ FIX: ensure number type
-          setWarrantyDays(data.warranty_days ? Number(data.warranty_days) : 365);
-
+          // ensure number type
+          setWarrantyDays(
+            data.warranty_days ? Number(data.warranty_days) : 365
+          );
         } else {
-
           setMessage(data.message || "Failed to fetch product.");
-
         }
-
       } catch (err) {
-
         console.error(err);
         setMessage("Server error. Please try again.");
-
       } finally {
-
         setLoading(false);
-
       }
-
     };
 
     fetchProduct();
-
   }, [id, navigate]);
 
   // ---------------- UPDATE PRODUCT ----------------
   const handleSubmit = async (e) => {
-
     e.preventDefault();
 
     const token = localStorage.getItem("token");
@@ -92,7 +78,6 @@ function EditProduct() {
     }
 
     try {
-
       setSaving(true);
       setMessage("");
 
@@ -104,59 +89,49 @@ function EditProduct() {
         },
         body: JSON.stringify({
           product_name: productName.trim(),
-          purchase_date: purchaseDate, // ✅ already correct format (YYYY-MM-DD)
-          warranty_days: Number(warrantyDays), // ✅ ensure number
+          purchase_date: purchaseDate,
+          warranty_days: Number(warrantyDays),
         }),
       });
 
       const data = await res.json();
 
       if (res.ok) {
-
         setMessage("✅ Product updated successfully!");
 
         setTimeout(() => {
           navigate("/dashboard");
         }, 1200);
-
       } else {
-
         setMessage(data.message || "Update failed.");
-
       }
-
     } catch (err) {
-
       console.error(err);
       setMessage("Server error. Please try again.");
-
     } finally {
-
       setSaving(false);
-
     }
-
   };
 
   // ---------------- LOADING ----------------
-  if (loading)
+  if (loading) {
     return (
       <h2 style={{ textAlign: "center", marginTop: "80px" }}>
         Loading Product...
       </h2>
     );
+  }
 
   // ---------------- UI ----------------
   return (
-
     <div style={pageStyle}>
-
       <div style={cardStyle}>
-
         <h2 style={{ marginBottom: "25px" }}>Edit Product</h2>
 
-        <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column" }}>
-
+        <form
+          onSubmit={handleSubmit}
+          style={{ display: "flex", flexDirection: "column" }}
+        >
           <input
             type="text"
             placeholder="Product Name"
@@ -187,7 +162,6 @@ function EditProduct() {
           <button type="submit" disabled={saving} style={buttonStyle}>
             {saving ? "Updating..." : "Update Product"}
           </button>
-
         </form>
 
         {message && (
@@ -195,19 +169,17 @@ function EditProduct() {
             style={{
               marginTop: "15px",
               fontWeight: "bold",
-              color: message.includes("success") ? "#28a745" : "#dc3545",
+              color: message.includes("success")
+                ? "#28a745"
+                : "#dc3545",
             }}
           >
             {message}
           </p>
         )}
-
       </div>
-
     </div>
-
   );
-
 }
 
 // ---------------- STYLES ----------------

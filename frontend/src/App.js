@@ -1,4 +1,3 @@
-// src/App.js
 import React, { useState, useEffect } from "react";
 import {
   BrowserRouter as Router,
@@ -18,56 +17,69 @@ import Dashboard from "./pages/Dashboard";
 import UploadBill from "./pages/UploadBill";
 import ProductDetails from "./pages/ProductDetails";
 import EditProduct from "./pages/EditProduct";
-import AddProduct from "./pages/AddProduct"; // ✅ ADDED
 
+
+// ---------------- 404 PAGE ----------------
+function NotFound() {
+  return (
+    <div style={{ textAlign: "center", marginTop: "60px" }}>
+      <h1>404</h1>
+      <p>Page Not Found</p>
+    </div>
+  );
+}
+
+// ---------------- TOKEN HELPER ----------------
+const getToken = () => localStorage.getItem("token");
 
 // ---------------- PROTECTED ROUTE ----------------
 function ProtectedRoute() {
-  const token = localStorage.getItem("token");
-  return token ? <Outlet /> : <Navigate to="/login" replace />;
+  return getToken() ? <Outlet /> : <Navigate to="/login" replace />;
 }
 
 // ---------------- PUBLIC ROUTE ----------------
 function PublicRoute() {
-  const token = localStorage.getItem("token");
-  return token ? <Navigate to="/dashboard" replace /> : <Outlet />;
+  return getToken() ? <Navigate to="/dashboard" replace /> : <Outlet />;
 }
 
 function App() {
+  const [isLoggedIn, setIsLoggedIn] = useState(!!getToken());
 
-  const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem("token"));
-
-  // ✅ Update navbar when login/logout happens
+  // 🔥 Fully reactive auth sync (Navbar + Login compatible)
   useEffect(() => {
-    const checkAuth = () => {
-      setIsLoggedIn(!!localStorage.getItem("token"));
+    const syncAuth = () => {
+      setIsLoggedIn(!!getToken());
     };
 
-    window.addEventListener("storage", checkAuth);
-    window.addEventListener("focus", checkAuth);
+    window.addEventListener("storage", syncAuth);
+    window.addEventListener("focus", syncAuth);
+    window.addEventListener("authChange", syncAuth);
+
+    // initial sync
+    syncAuth();
 
     return () => {
-      window.removeEventListener("storage", checkAuth);
-      window.removeEventListener("focus", checkAuth);
+      window.removeEventListener("storage", syncAuth);
+      window.removeEventListener("focus", syncAuth);
+      window.removeEventListener("authChange", syncAuth);
     };
   }, []);
 
   return (
-
     <Router>
-
       {/* Navbar only when logged in */}
       {isLoggedIn && <Navbar />}
 
       <Routes>
-
         {/* ROOT REDIRECT */}
         <Route
           path="/"
           element={
-            isLoggedIn
-              ? <Navigate to="/dashboard" replace />
-              : <Navigate to="/login" replace />
+            isLoggedIn ? (
+              <Navigate to="/dashboard" replace />
+            ) : (
+              <Navigate to="/login" replace />
+            )
           }
         />
 
@@ -79,26 +91,16 @@ function App() {
 
         {/* PROTECTED ROUTES */}
         <Route element={<ProtectedRoute />}>
-
           <Route path="/dashboard" element={<Dashboard />} />
-
           <Route path="/upload-bill" element={<UploadBill />} />
-
-          <Route path="/add-product" element={<AddProduct />} /> {/* ✅ NEW */}
-
           <Route path="/product/:id" element={<ProductDetails />} />
-
           <Route path="/edit-product/:id" element={<EditProduct />} />
-
         </Route>
 
-        {/* FALLBACK */}
-        <Route path="*" element={<Navigate to="/" replace />} />
-
+        {/* 404 PAGE */}
+        <Route path="*" element={<NotFound />} />
       </Routes>
-
     </Router>
-
   );
 }
 

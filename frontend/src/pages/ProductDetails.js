@@ -1,4 +1,3 @@
-// src/pages/ProductDetails.js
 import React, { useState, useEffect, useCallback } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -7,7 +6,6 @@ import { FaDownload } from "react-icons/fa";
 const BASE_URL = "http://127.0.0.1:5000";
 
 function ProductDetails() {
-
   const { id } = useParams();
   const navigate = useNavigate();
 
@@ -15,7 +13,6 @@ function ProductDetails() {
   const [preview, setPreview] = useState(null);
   const [qrPreview, setQrPreview] = useState(null);
   const [billFile, setBillFile] = useState(null);
-
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   const [loading, setLoading] = useState(true);
@@ -25,7 +22,6 @@ function ProductDetails() {
   const forceDownload = async (url, filename) => {
     try {
       const res = await fetch(url);
-
       if (!res.ok) throw new Error("Network error");
 
       const blob = await res.blob();
@@ -40,7 +36,6 @@ function ProductDetails() {
       link.remove();
 
       window.URL.revokeObjectURL(blobUrl);
-
     } catch (err) {
       console.error("Download failed", err);
       alert("Download failed.");
@@ -49,7 +44,6 @@ function ProductDetails() {
 
   // ---------------- FETCH PRODUCT ----------------
   const fetchProduct = useCallback(async () => {
-
     const token = localStorage.getItem("token");
 
     if (!token) {
@@ -60,7 +54,6 @@ function ProductDetails() {
     setLoading(true);
 
     try {
-
       const res = await fetch(`${BASE_URL}/products/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -68,29 +61,25 @@ function ProductDetails() {
       const data = await res.json();
 
       if (res.ok) {
-
         setProduct({
           product_name: data.product_name,
           purchase_date: data.purchase_date,
-          warranty_days: data.warranty_days, // ✅ FIXED
+          warranty_days: data.warranty_days,
           expiry_date: data.expiry_date,
           status: data.status,
           days_remaining: data.days_remaining,
           bill_url: data.bill_url,
           qr_url: data.qr_url,
         });
-
       } else {
         alert(data.message || "Failed to fetch product");
       }
-
     } catch (err) {
       console.error(err);
       alert("Server error");
     } finally {
       setLoading(false);
     }
-
   }, [id, navigate]);
 
   useEffect(() => {
@@ -99,13 +88,10 @@ function ProductDetails() {
 
   // ---------------- DELETE PRODUCT ----------------
   const deleteProduct = async () => {
-
     const token = localStorage.getItem("token");
-
     if (!token) return;
 
     try {
-
       const res = await fetch(`${BASE_URL}/delete_product/${id}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
@@ -119,7 +105,6 @@ function ProductDetails() {
       } else {
         alert(data.message || "Delete failed");
       }
-
     } catch (err) {
       console.error(err);
       alert("Server error");
@@ -128,7 +113,6 @@ function ProductDetails() {
 
   // ---------------- UPLOAD BILL ----------------
   const handleBillUpload = async () => {
-
     if (!billFile) {
       alert("Select a file first");
       return;
@@ -141,25 +125,17 @@ function ProductDetails() {
     formData.append("product_id", id);
 
     try {
-
       setUploading(true);
 
-      const res = await axios.post(
-        `${BASE_URL}/upload_bill`,
-        formData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const res = await axios.post(`${BASE_URL}/upload_bill`, formData, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
       if (res.status === 200) {
         alert("✅ Bill uploaded successfully");
         setBillFile(null);
         fetchProduct();
       }
-
     } catch (err) {
       console.error(err);
       alert(err.response?.data?.message || "Upload failed");
@@ -168,29 +144,19 @@ function ProductDetails() {
     }
   };
 
-  // ---------------- SHARE ----------------
-  const shareFile = async (url) => {
+  // ---------------- SHARE FUNCTION REMOVED ----------------
+  // (Deleted as requested)
 
-    const fullUrl = `${BASE_URL}${url}`;
-
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: "Warranty File",
-          url: fullUrl,
-        });
-      } catch {}
-    } else {
-      navigator.clipboard.writeText(fullUrl);
-      alert("Link copied");
-    }
-  };
-
+  // ---------------- LOADING STATES ----------------
   if (loading)
     return <h2 style={{ textAlign: "center", marginTop: "80px" }}>Loading...</h2>;
 
   if (!product)
-    return <h2 style={{ textAlign: "center", marginTop: "80px" }}>Product not found</h2>;
+    return (
+      <h2 style={{ textAlign: "center", marginTop: "80px" }}>
+        Product not found
+      </h2>
+    );
 
   const progress = Math.max(
     0,
@@ -201,17 +167,12 @@ function ProductDetails() {
   );
 
   return (
-
     <div style={pageStyle}>
-
       <div style={cardStyle}>
-
         <h1>📄 Warranty Details</h1>
-
         <h2>{product.product_name}</h2>
 
         <div style={{ marginBottom: "20px" }}>
-
           <Link to={`/edit-product/${id}`} style={editButton}>
             Edit Product
           </Link>
@@ -222,7 +183,6 @@ function ProductDetails() {
           >
             Delete Product
           </button>
-
         </div>
 
         <p><b>Purchase Date:</b> {product.purchase_date}</p>
@@ -242,7 +202,9 @@ function ProductDetails() {
               src={`${BASE_URL}${product.bill_url}`}
               alt="Bill"
               style={billImage}
-              onClick={() => setPreview(`${BASE_URL}${product.bill_url}`)}
+              onClick={() =>
+                setPreview(`${BASE_URL}${product.bill_url}`)
+              }
             />
 
             <button
@@ -256,18 +218,10 @@ function ProductDetails() {
             >
               <FaDownload /> Download
             </button>
-
-            <button
-              onClick={() => shareFile(product.bill_url)}
-              style={actionButton}
-            >
-              Share
-            </button>
-
           </div>
         )}
 
-        {/* UPLOAD */}
+        {/* UPLOAD BILL */}
         <div style={{ marginTop: "30px" }}>
           <h3>⬆ Upload New Bill</h3>
 
@@ -284,7 +238,6 @@ function ProductDetails() {
           >
             {uploading ? "Uploading..." : "Upload"}
           </button>
-
         </div>
 
         {/* QR */}
@@ -296,7 +249,9 @@ function ProductDetails() {
               src={`${BASE_URL}${product.qr_url}`}
               alt="QR"
               style={{ width: "120px", cursor: "pointer" }}
-              onClick={() => setQrPreview(`${BASE_URL}${product.qr_url}`)}
+              onClick={() =>
+                setQrPreview(`${BASE_URL}${product.qr_url}`)
+              }
             />
 
             <button
@@ -312,11 +267,22 @@ function ProductDetails() {
             </button>
           </div>
         )}
-
       </div>
 
-      {preview && <PreviewModal src={preview} onClose={() => setPreview(null)} />}
-      {qrPreview && <PreviewModal src={qrPreview} onClose={() => setQrPreview(null)} />}
+      {/* PREVIEW MODAL */}
+      {preview && (
+        <PreviewModal
+          src={preview}
+          onClose={() => setPreview(null)}
+        />
+      )}
+
+      {qrPreview && (
+        <PreviewModal
+          src={qrPreview}
+          onClose={() => setQrPreview(null)}
+        />
+      )}
 
       {showDeleteModal && (
         <DeleteModal
@@ -324,11 +290,8 @@ function ProductDetails() {
           onCancel={() => setShowDeleteModal(false)}
         />
       )}
-
     </div>
-
   );
-
 }
 
 // ---------- MODALS ----------
@@ -342,8 +305,12 @@ const DeleteModal = ({ onDelete, onCancel }) => (
   <div style={modalOverlay}>
     <div style={deleteBox}>
       <h3>Delete Product?</h3>
-      <button onClick={onDelete} style={deleteButton}>Delete</button>
-      <button onClick={onCancel} style={cancelButton}>Cancel</button>
+      <button onClick={onDelete} style={deleteButton}>
+        Delete
+      </button>
+      <button onClick={onCancel} style={cancelButton}>
+        Cancel
+      </button>
     </div>
   </div>
 );

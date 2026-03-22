@@ -1,14 +1,11 @@
-// src/pages/UploadBill.js
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 function UploadBill() {
-
   const navigate = useNavigate();
 
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState(null);
-
   const [message, setMessage] = useState("");
   const [uploading, setUploading] = useState(false);
   const [dragging, setDragging] = useState(false);
@@ -24,7 +21,6 @@ function UploadBill() {
 
   // ---------------- FILE SELECTION ----------------
   const handleFileChange = (selectedFile) => {
-
     if (!selectedFile) return;
 
     if (!selectedFile.type.startsWith("image/")) {
@@ -47,7 +43,6 @@ function UploadBill() {
 
   // ---------------- UPLOAD BILL ----------------
   const handleUpload = async (e) => {
-
     e.preventDefault();
 
     const token = localStorage.getItem("token");
@@ -66,58 +61,46 @@ function UploadBill() {
     formData.append("bill", file);
 
     try {
-
       setUploading(true);
       setMessage("");
 
       const res = await fetch(`${BASE_URL}/upload_bill`, {
         method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
         body: formData,
       });
 
       const data = await res.json();
 
       if (res.ok) {
-
         setMessage("✅ Product created from bill!");
-
         setFile(null);
         setPreview(null);
 
         setTimeout(() => {
           navigate("/dashboard");
         }, 1200);
-
       } else {
-
         setMessage(data.message || "Upload failed.");
       }
-
     } catch (err) {
-
       console.error(err);
       setMessage("Server error. Please try again.");
-
     } finally {
-
       setUploading(false);
     }
-
   };
 
   return (
-
     <div style={pageStyle}>
-
       <div style={cardStyle}>
-
         <h1 style={{ marginBottom: "20px" }}>
           Upload Bill (Auto Create Product)
         </h1>
 
         <form onSubmit={handleUpload}>
-
           {/* DRAG AREA */}
           <div
             onDragOver={(e) => {
@@ -138,7 +121,6 @@ function UploadBill() {
               background: dragging ? "#eef5ff" : "#f9f9f9",
             }}
           >
-
             <p style={{ marginBottom: "10px", fontWeight: "500" }}>
               Drag & Drop Bill Image
             </p>
@@ -148,14 +130,11 @@ function UploadBill() {
               accept="image/*"
               onChange={(e) => handleFileChange(e.target.files[0])}
             />
-
           </div>
 
           {/* PREVIEW */}
           {preview && (
-
             <div style={{ marginBottom: "20px" }}>
-
               <p style={{ fontWeight: "bold" }}>Preview</p>
 
               <img
@@ -179,26 +158,16 @@ function UploadBill() {
               >
                 Remove
               </button>
-
             </div>
-
           )}
 
           {/* SUBMIT */}
-          <button
-            type="submit"
-            disabled={uploading}
-            style={uploadButton}
-          >
-
+          <button type="submit" disabled={uploading} style={uploadButton}>
             {uploading ? "Uploading..." : "Upload & Create Product"}
-
           </button>
-
         </form>
 
         {message && (
-
           <p
             style={{
               marginTop: "15px",
@@ -208,15 +177,10 @@ function UploadBill() {
           >
             {message}
           </p>
-
         )}
-
       </div>
-
     </div>
-
   );
-
 }
 
 const pageStyle = {
