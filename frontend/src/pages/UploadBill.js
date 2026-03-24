@@ -12,14 +12,12 @@ function UploadBill() {
 
   const BASE_URL = "http://127.0.0.1:5000";
 
-  // ---------------- CLEANUP PREVIEW ----------------
   useEffect(() => {
     return () => {
       if (preview) URL.revokeObjectURL(preview);
     };
   }, [preview]);
 
-  // ---------------- FILE SELECTION ----------------
   const handleFileChange = (selectedFile) => {
     if (!selectedFile) return;
 
@@ -33,7 +31,6 @@ function UploadBill() {
     setMessage("");
   };
 
-  // ---------------- REMOVE FILE ----------------
   const removeFile = () => {
     if (preview) URL.revokeObjectURL(preview);
     setFile(null);
@@ -41,7 +38,6 @@ function UploadBill() {
     setMessage("");
   };
 
-  // ---------------- UPLOAD BILL ----------------
   const handleUpload = async (e) => {
     e.preventDefault();
 
@@ -96,8 +92,8 @@ function UploadBill() {
   return (
     <div style={pageStyle}>
       <div style={cardStyle}>
-        <h1 style={{ marginBottom: "20px" }}>
-          Upload Bill (Auto Create Product)
+        <h1 style={{ marginBottom: "20px", color: "#4F46E5" }}>
+          Upload Bill
         </h1>
 
         <form onSubmit={handleUpload}>
@@ -114,11 +110,14 @@ function UploadBill() {
               handleFileChange(e.dataTransfer.files[0]);
             }}
             style={{
-              border: dragging ? "2px solid #4facfe" : "2px dashed #aaa",
-              borderRadius: "10px",
+              border: dragging
+                ? "2px solid #4F46E5"
+                : "2px dashed #cbd5e1",
+              borderRadius: "12px",
               padding: "30px",
               marginBottom: "20px",
-              background: dragging ? "#eef5ff" : "#f9f9f9",
+              background: dragging ? "#eef2ff" : "#f8fafc",
+              transition: "0.2s",
             }}
           >
             <p style={{ marginBottom: "10px", fontWeight: "500" }}>
@@ -128,7 +127,9 @@ function UploadBill() {
             <input
               type="file"
               accept="image/*"
-              onChange={(e) => handleFileChange(e.target.files[0])}
+              onChange={(e) =>
+                handleFileChange(e.target.files[0])
+              }
             />
           </div>
 
@@ -140,11 +141,7 @@ function UploadBill() {
               <img
                 src={preview}
                 alt="Bill Preview"
-                style={{
-                  width: "100%",
-                  borderRadius: "10px",
-                  boxShadow: "0 6px 20px rgba(0,0,0,0.2)",
-                }}
+                style={previewImage}
               />
 
               <p style={{ fontSize: "14px", marginTop: "6px" }}>
@@ -162,8 +159,12 @@ function UploadBill() {
           )}
 
           {/* SUBMIT */}
-          <button type="submit" disabled={uploading} style={uploadButton}>
-            {uploading ? "Uploading..." : "Upload & Create Product"}
+          <button
+            type="submit"
+            disabled={uploading}
+            style={uploadButton}
+          >
+            {uploading ? "Uploading..." : "Upload & Create"}
           </button>
         </form>
 
@@ -172,7 +173,9 @@ function UploadBill() {
             style={{
               marginTop: "15px",
               fontWeight: "bold",
-              color: message.includes("✅") ? "#28a745" : "#dc3545",
+              color: message.includes("✅")
+                ? "#22c55e"
+                : "#ef4444",
             }}
           >
             {message}
@@ -183,44 +186,51 @@ function UploadBill() {
   );
 }
 
+// ---------- STYLES ----------
 const pageStyle = {
   minHeight: "100vh",
   display: "flex",
   justifyContent: "center",
   alignItems: "center",
-  background: "linear-gradient(135deg,#667eea,#764ba2)",
+  background: "linear-gradient(135deg,#eef2ff,#f8fafc)",
   padding: "20px",
 };
 
 const cardStyle = {
   width: "100%",
-  maxWidth: "450px",
-  padding: "35px",
-  borderRadius: "14px",
+  maxWidth: "420px",
+  padding: "30px",
+  borderRadius: "16px",
   background: "#fff",
-  boxShadow: "0 10px 30px rgba(0,0,0,0.25)",
+  boxShadow: "0 10px 25px rgba(0,0,0,0.1)",
   textAlign: "center",
+};
+
+const previewImage = {
+  width: "100%",
+  borderRadius: "12px",
+  boxShadow: "0 6px 20px rgba(0,0,0,0.1)",
 };
 
 const uploadButton = {
   width: "100%",
   padding: "12px",
-  borderRadius: "8px",
+  borderRadius: "10px",
   border: "none",
-  background: "linear-gradient(135deg,#28a745,#2ecc71)",
+  background: "#4F46E5",
   color: "#fff",
   fontWeight: "bold",
-  fontSize: "16px",
+  fontSize: "15px",
   cursor: "pointer",
 };
 
 const removeButton = {
   marginTop: "8px",
   padding: "6px 12px",
-  background: "#dc3545",
+  background: "#EF4444",
   color: "#fff",
   border: "none",
-  borderRadius: "6px",
+  borderRadius: "8px",
   cursor: "pointer",
 };
 
