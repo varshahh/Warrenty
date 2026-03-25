@@ -29,10 +29,8 @@ function Login() {
       const data = await res.json();
 
       if (res.ok && data.token) {
-        // ✅ Save token
         localStorage.setItem("token", data.token);
 
-        // 🔥 IMPORTANT: Notify App.js about auth change
         window.dispatchEvent(new Event("authChange"));
 
         setMessage("Login successful! Redirecting...");
@@ -52,27 +50,10 @@ function Login() {
   };
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        background: "linear-gradient(135deg,#667eea,#764ba2)"
-      }}
-    >
-      <div
-        style={{
-          width: "100%",
-          maxWidth: "400px",
-          padding: "40px",
-          borderRadius: "12px",
-          backgroundColor: "#fff",
-          boxShadow: "0 8px 30px rgba(0,0,0,0.2)",
-          textAlign: "center"
-        }}
-      >
-        <h1 style={{ marginBottom: "25px", color: "#333" }}>
+    <div className="page-center">
+      <div className="glass-card" style={{ width: "400px", textAlign: "center" }}>
+        
+        <h1 style={{ marginBottom: "25px" }}>
           Smart Warranty
         </h1>
 
@@ -87,12 +68,6 @@ function Login() {
             required
             disabled={loading}
             onChange={(e) => setEmail(e.target.value)}
-            style={{
-              marginBottom: "15px",
-              padding: "12px",
-              borderRadius: "8px",
-              border: "1px solid #ccc"
-            }}
           />
 
           <input
@@ -102,29 +77,16 @@ function Login() {
             required
             disabled={loading}
             onChange={(e) => setPassword(e.target.value)}
-            style={{
-              marginBottom: "20px",
-              padding: "12px",
-              borderRadius: "8px",
-              border: "1px solid #ccc"
-            }}
           />
 
           <button
             type="submit"
             disabled={loading}
-            style={{
-              padding: "12px",
-              borderRadius: "8px",
-              border: "none",
-              background: "linear-gradient(135deg,#667eea,#764ba2)",
-              color: "#fff",
-              fontWeight: "bold",
-              cursor: "pointer"
-            }}
+            className="btn-primary"
           >
             {loading ? "Logging in..." : "Login"}
           </button>
+
         </form>
 
         {message && (
@@ -132,8 +94,8 @@ function Login() {
             style={{
               marginTop: "15px",
               color: message.includes("successful")
-                ? "#28a745"
-                : "#dc3545",
+                ? "#22c55e"
+                : "#ef4444",
               fontWeight: "bold"
             }}
           >
@@ -145,7 +107,7 @@ function Login() {
           Don't have an account?{" "}
           <span
             style={{
-              color: "#764ba2",
+              color: "#185a9d",
               cursor: "pointer",
               fontWeight: "bold"
             }}
@@ -154,6 +116,7 @@ function Login() {
             Register
           </span>
         </p>
+
       </div>
     </div>
   );

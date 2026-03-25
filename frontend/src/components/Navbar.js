@@ -10,25 +10,21 @@ function Navbar() {
     !!localStorage.getItem("token")
   );
 
-  // 👤 Optional user name (if stored during login)
+  // 👤 Optional user name
   const [userName, setUserName] = useState(
     localStorage.getItem("name") || ""
   );
 
-  // 🔄 Sync auth state (same tab + multi tab)
+  // 🔄 Sync auth state
   useEffect(() => {
     const syncAuth = () => {
       setIsLoggedIn(!!localStorage.getItem("token"));
       setUserName(localStorage.getItem("name") || "");
     };
 
-    // multi-tab sync
     window.addEventListener("storage", syncAuth);
-
-    // same-tab sync (IMPORTANT FIX)
     window.addEventListener("authChange", syncAuth);
 
-    // initial sync
     syncAuth();
 
     return () => {
@@ -42,7 +38,6 @@ function Navbar() {
     localStorage.removeItem("token");
     localStorage.removeItem("name");
 
-    // notify all listeners
     window.dispatchEvent(new Event("authChange"));
 
     setIsLoggedIn(false);
@@ -52,21 +47,24 @@ function Navbar() {
 
   return (
     <nav className="navbar">
+      
       {/* LOGO */}
       <h2
         className="navbar-logo"
         onClick={() =>
           navigate(isLoggedIn ? "/dashboard" : "/login")
         }
-        style={{ cursor: "pointer" }}
       >
-        Smart Warranty
+        📦 Smart Warranty
       </h2>
 
       <div className="navbar-links">
-        {/* 👤 USER INFO */}
+        
+        {/* USER */}
         {isLoggedIn && userName && (
-          <span className="navbar-user">Hi, {userName}</span>
+          <span className="navbar-user">
+            👋 Hi, {userName}
+          </span>
         )}
 
         {!isLoggedIn ? (
@@ -74,6 +72,7 @@ function Navbar() {
             <Link to="/register" className="nav-link">
               Register
             </Link>
+
             <Link to="/login" className="nav-link">
               Login
             </Link>
@@ -83,19 +82,21 @@ function Navbar() {
             <Link to="/dashboard" className="nav-link">
               Dashboard
             </Link>
-            <Link to="/add-product" className="nav-link">
-              Add Product
-            </Link>
+
             <Link to="/upload-bill" className="nav-link">
               Upload Bill
             </Link>
 
-            <button onClick={handleLogout} className="nav-button">
+            <button
+              onClick={handleLogout}
+              className="logout-button"
+            >
               Logout
             </button>
           </>
         )}
       </div>
+
     </nav>
   );
 }

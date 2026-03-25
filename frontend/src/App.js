@@ -18,13 +18,18 @@ import UploadBill from "./pages/UploadBill";
 import ProductDetails from "./pages/ProductDetails";
 import EditProduct from "./pages/EditProduct";
 
+// 🔥 Import Global CSS
+import "./App.css";
+
 
 // ---------------- 404 PAGE ----------------
 function NotFound() {
   return (
-    <div style={{ textAlign: "center", marginTop: "60px" }}>
-      <h1>404</h1>
-      <p>Page Not Found</p>
+    <div className="page-center">
+      <div className="glass-card">
+        <h1>404</h1>
+        <p>Page Not Found</p>
+      </div>
     </div>
   );
 }
@@ -55,7 +60,6 @@ function App() {
     window.addEventListener("focus", syncAuth);
     window.addEventListener("authChange", syncAuth);
 
-    // initial sync
     syncAuth();
 
     return () => {
@@ -67,39 +71,44 @@ function App() {
 
   return (
     <Router>
-      {/* Navbar only when logged in */}
-      {isLoggedIn && <Navbar />}
+      {/* 🌊 Global Gradient Wrapper */}
+      <div className="app-theme">
 
-      <Routes>
-        {/* ROOT REDIRECT */}
-        <Route
-          path="/"
-          element={
-            isLoggedIn ? (
-              <Navigate to="/dashboard" replace />
-            ) : (
-              <Navigate to="/login" replace />
-            )
-          }
-        />
+        {/* Navbar only when logged in */}
+        {isLoggedIn && <Navbar />}
 
-        {/* PUBLIC ROUTES */}
-        <Route element={<PublicRoute />}>
-          <Route path="/register" element={<Register />} />
-          <Route path="/login" element={<Login />} />
-        </Route>
+        <Routes>
+          {/* ROOT REDIRECT */}
+          <Route
+            path="/"
+            element={
+              isLoggedIn ? (
+                <Navigate to="/dashboard" replace />
+              ) : (
+                <Navigate to="/login" replace />
+              )
+            }
+          />
 
-        {/* PROTECTED ROUTES */}
-        <Route element={<ProtectedRoute />}>
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/upload-bill" element={<UploadBill />} />
-          <Route path="/product/:id" element={<ProductDetails />} />
-          <Route path="/edit-product/:id" element={<EditProduct />} />
-        </Route>
+          {/* PUBLIC ROUTES */}
+          <Route element={<PublicRoute />}>
+            <Route path="/register" element={<Register />} />
+            <Route path="/login" element={<Login />} />
+          </Route>
 
-        {/* 404 PAGE */}
-        <Route path="*" element={<NotFound />} />
-      </Routes>
+          {/* PROTECTED ROUTES */}
+          <Route element={<ProtectedRoute />}>
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/upload-bill" element={<UploadBill />} />
+            <Route path="/product/:id" element={<ProductDetails />} />
+            <Route path="/edit-product/:id" element={<EditProduct />} />
+          </Route>
+
+          {/* 404 PAGE */}
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+
+      </div>
     </Router>
   );
 }

@@ -38,7 +38,6 @@ function EditProduct() {
           setProductName(data.product_name || "");
           setPurchaseDate(data.purchase_date || "");
 
-          // ensure number type
           setWarrantyDays(
             data.warranty_days ? Number(data.warranty_days) : 365
           );
@@ -116,7 +115,7 @@ function EditProduct() {
   // ---------------- LOADING ----------------
   if (loading) {
     return (
-      <h2 style={{ textAlign: "center", marginTop: "80px" }}>
+      <h2 style={{ textAlign: "center", marginTop: "80px", color: "white" }}>
         Loading Product...
       </h2>
     );
@@ -126,7 +125,7 @@ function EditProduct() {
   return (
     <div style={pageStyle}>
       <div style={cardStyle}>
-        <h2 style={{ marginBottom: "25px" }}>Edit Product</h2>
+        <h2 style={{ marginBottom: "25px" }}>✏ Edit Product</h2>
 
         <form
           onSubmit={handleSubmit}
@@ -170,8 +169,8 @@ function EditProduct() {
               marginTop: "15px",
               fontWeight: "bold",
               color: message.includes("success")
-                ? "#28a745"
-                : "#dc3545",
+                ? "#90ee90"
+                : "#ffb3b3",
             }}
           >
             {message}
@@ -183,12 +182,12 @@ function EditProduct() {
 }
 
 // ---------------- STYLES ----------------
+
 const pageStyle = {
   minHeight: "100vh",
   display: "flex",
   justifyContent: "center",
   alignItems: "center",
-  background: "linear-gradient(135deg,#667eea,#764ba2)",
   padding: "20px",
 };
 
@@ -196,27 +195,33 @@ const cardStyle = {
   width: "100%",
   maxWidth: "420px",
   padding: "40px",
-  borderRadius: "12px",
-  backgroundColor: "#fff",
-  boxShadow: "0 10px 25px rgba(0,0,0,0.2)",
+  borderRadius: "16px",
+  background: "rgba(255,255,255,0.15)",
+  backdropFilter: "blur(14px)",
+  WebkitBackdropFilter: "blur(14px)",
+  boxShadow: "0 8px 32px rgba(0,0,0,0.2)",
+  border: "1px solid rgba(255,255,255,0.2)",
   textAlign: "center",
+  color: "white",
 };
 
 const inputStyle = {
   marginBottom: "15px",
   padding: "12px",
   borderRadius: "8px",
-  border: "1px solid #ccc",
+  border: "none",
+  outline: "none",
 };
 
 const buttonStyle = {
   padding: "12px",
   borderRadius: "8px",
   border: "none",
-  background: "linear-gradient(135deg,#764ba2,#667eea)",
+  background: "linear-gradient(135deg,#43cea2,#185a9d)",
   color: "#fff",
   fontWeight: "bold",
   cursor: "pointer",
+  transition: "0.3s",
 };
 
 export default EditProduct;

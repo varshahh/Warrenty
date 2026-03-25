@@ -42,25 +42,17 @@ function Register() {
   };
 
   return (
-    <div style={{
-      minHeight: "100vh",
-      display: "flex",
-      justifyContent: "center",
-      alignItems: "center",
-      background: "linear-gradient(135deg,#667eea,#764ba2)"
-    }}>
-      <div style={{
-        width: "100%",
-        maxWidth: "400px",
-        padding: "40px",
-        borderRadius: "12px",
-        backgroundColor: "#fff",
-        boxShadow: "0 8px 30px rgba(0,0,0,0.2)",
-        textAlign: "center"
-      }}>
-        <h1 style={{ marginBottom: "25px", color: "#333" }}>Create Account</h1>
+    <div className="page-center">
+      <div className="glass-card" style={{ width: "400px", textAlign: "center" }}>
+        
+        <h1 style={{ marginBottom: "25px" }}>
+          Create Account
+        </h1>
 
-        <form onSubmit={handleRegister} style={{ display: "flex", flexDirection: "column" }}>
+        <form
+          onSubmit={handleRegister}
+          style={{ display: "flex", flexDirection: "column" }}
+        >
           <input
             type="text"
             placeholder="Name"
@@ -68,7 +60,6 @@ function Register() {
             required
             disabled={loading}
             onChange={(e) => setName(e.target.value)}
-            style={{ marginBottom: "15px", padding: "12px", borderRadius: "8px", border: "1px solid #ccc" }}
           />
 
           <input
@@ -78,7 +69,6 @@ function Register() {
             required
             disabled={loading}
             onChange={(e) => setEmail(e.target.value)}
-            style={{ marginBottom: "15px", padding: "12px", borderRadius: "8px", border: "1px solid #ccc" }}
           />
 
           <input
@@ -88,32 +78,28 @@ function Register() {
             required
             disabled={loading}
             onChange={(e) => setPassword(e.target.value)}
-            style={{ marginBottom: "20px", padding: "12px", borderRadius: "8px", border: "1px solid #ccc" }}
           />
 
           <button
             type="submit"
             disabled={loading}
-            style={{
-              padding: "12px",
-              borderRadius: "8px",
-              border: "none",
-              background: "linear-gradient(135deg,#667eea,#764ba2)",
-              color: "#fff",
-              fontWeight: "bold",
-              cursor: loading ? "not-allowed" : "pointer"
-            }}
+            className="btn-primary"
+            style={{ cursor: loading ? "not-allowed" : "pointer" }}
           >
             {loading ? "Creating account..." : "Register"}
           </button>
         </form>
 
         {message && (
-          <p style={{
-            marginTop: "15px",
-            color: message.includes("successful") ? "#28a745" : "#dc3545",
-            fontWeight: "bold"
-          }}>
+          <p
+            style={{
+              marginTop: "15px",
+              color: message.includes("successful")
+                ? "#22c55e"
+                : "#ef4444",
+              fontWeight: "bold"
+            }}
+          >
             {message}
           </p>
         )}
@@ -121,12 +107,17 @@ function Register() {
         <p style={{ marginTop: "15px", fontSize: "0.9rem" }}>
           Already have an account?{" "}
           <span
-            style={{ color: "#764ba2", cursor: "pointer", fontWeight: "bold" }}
+            style={{
+              color: "#185a9d",
+              cursor: "pointer",
+              fontWeight: "bold"
+            }}
             onClick={() => navigate("/login")}
           >
             Login
           </span>
         </p>
+
       </div>
     </div>
   );

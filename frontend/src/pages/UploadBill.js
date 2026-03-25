@@ -90,13 +90,20 @@ function UploadBill() {
   };
 
   return (
-    <div style={pageStyle}>
-      <div style={cardStyle}>
-        <h1 style={{ marginBottom: "20px", color: "#4F46E5" }}>
-          Upload Bill
+    <div className="page-center">
+      <div
+        className="glass-card"
+        style={{
+          width: "420px",
+          textAlign: "center"
+        }}
+      >
+        <h1 style={{ marginBottom: "20px" }}>
+          📤 Upload Bill
         </h1>
 
         <form onSubmit={handleUpload}>
+          
           {/* DRAG AREA */}
           <div
             onDragOver={(e) => {
@@ -111,13 +118,15 @@ function UploadBill() {
             }}
             style={{
               border: dragging
-                ? "2px solid #4F46E5"
-                : "2px dashed #cbd5e1",
+                ? "2px solid #4facfe"
+                : "2px dashed rgba(255,255,255,0.3)",
               borderRadius: "12px",
               padding: "30px",
               marginBottom: "20px",
-              background: dragging ? "#eef2ff" : "#f8fafc",
-              transition: "0.2s",
+              background: dragging
+                ? "rgba(255,255,255,0.15)"
+                : "rgba(255,255,255,0.05)",
+              transition: "0.3s"
             }}
           >
             <p style={{ marginBottom: "10px", fontWeight: "500" }}>
@@ -136,22 +145,36 @@ function UploadBill() {
           {/* PREVIEW */}
           {preview && (
             <div style={{ marginBottom: "20px" }}>
-              <p style={{ fontWeight: "bold" }}>Preview</p>
+              <p style={{ fontWeight: "bold" }}>
+                Preview
+              </p>
 
               <img
                 src={preview}
                 alt="Bill Preview"
-                style={previewImage}
+                style={{
+                  width: "100%",
+                  borderRadius: "12px"
+                }}
               />
 
-              <p style={{ fontSize: "14px", marginTop: "6px" }}>
+              <p
+                style={{
+                  fontSize: "14px",
+                  marginTop: "6px"
+                }}
+              >
                 {file.name}
               </p>
 
               <button
                 type="button"
                 onClick={removeFile}
-                style={removeButton}
+                className="btn-primary"
+                style={{
+                  background:
+                    "linear-gradient(135deg,#ef4444,#dc2626)"
+                }}
               >
                 Remove
               </button>
@@ -162,10 +185,14 @@ function UploadBill() {
           <button
             type="submit"
             disabled={uploading}
-            style={uploadButton}
+            className="btn-primary"
+            style={{ width: "100%" }}
           >
-            {uploading ? "Uploading..." : "Upload & Create"}
+            {uploading
+              ? "Uploading..."
+              : "Upload & Create"}
           </button>
+
         </form>
 
         {message && (
@@ -175,7 +202,7 @@ function UploadBill() {
               fontWeight: "bold",
               color: message.includes("✅")
                 ? "#22c55e"
-                : "#ef4444",
+                : "#ef4444"
             }}
           >
             {message}
@@ -185,53 +212,5 @@ function UploadBill() {
     </div>
   );
 }
-
-// ---------- STYLES ----------
-const pageStyle = {
-  minHeight: "100vh",
-  display: "flex",
-  justifyContent: "center",
-  alignItems: "center",
-  background: "linear-gradient(135deg,#eef2ff,#f8fafc)",
-  padding: "20px",
-};
-
-const cardStyle = {
-  width: "100%",
-  maxWidth: "420px",
-  padding: "30px",
-  borderRadius: "16px",
-  background: "#fff",
-  boxShadow: "0 10px 25px rgba(0,0,0,0.1)",
-  textAlign: "center",
-};
-
-const previewImage = {
-  width: "100%",
-  borderRadius: "12px",
-  boxShadow: "0 6px 20px rgba(0,0,0,0.1)",
-};
-
-const uploadButton = {
-  width: "100%",
-  padding: "12px",
-  borderRadius: "10px",
-  border: "none",
-  background: "#4F46E5",
-  color: "#fff",
-  fontWeight: "bold",
-  fontSize: "15px",
-  cursor: "pointer",
-};
-
-const removeButton = {
-  marginTop: "8px",
-  padding: "6px 12px",
-  background: "#EF4444",
-  color: "#fff",
-  border: "none",
-  borderRadius: "8px",
-  cursor: "pointer",
-};
 
 export default UploadBill;

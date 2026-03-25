@@ -6,18 +6,18 @@
   justify-content: space-between;
   align-items: center;
   padding: 16px 40px;
-  background: linear-gradient(90deg, #4facfe, #00f2fe);
+  background: linear-gradient(90deg, #0f0f0f, #1a1a1a, #111827);
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
   font-family: Arial, sans-serif;
   position: sticky;
   top: 0;
   z-index: 100;
-  background-clip: padding-box; /* prevents shadow bleed */
+  background-clip: padding-box;
 }
 
 /* Logo */
 .navbar-logo {
-  color: white;
+  color: #ffffff;
   margin: 0;
   font-weight: bold;
   letter-spacing: 1px;
@@ -29,7 +29,7 @@
 .navbar-logo:hover,
 .navbar-logo:focus {
   transform: scale(1.05);
-  outline: none; /* improves focus styling */
+  outline: none;
 }
 
 /* Links container */
@@ -37,32 +37,38 @@
   display: flex;
   align-items: center;
   gap: 18px;
-  flex-wrap: wrap; /* prevents overflow on small screens */
+  flex-wrap: wrap;
 }
 
 /* Navigation links */
 .nav-link {
   text-decoration: none;
-  color: white;
+  color: #e5e7eb;
   font-weight: 500;
   padding: 8px 14px;
   border-radius: 6px;
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.08);
   transition: all 0.25s ease;
 }
 
 .nav-link:hover,
 .nav-link:focus {
-  background: rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.2);
   transform: translateY(-2px);
-  outline: none; /* keyboard navigation */
+  outline: none;
+}
+
+/* User Name */
+.navbar-user {
+  color: white;
+  font-weight: 500;
 }
 
 /* Logout button */
-.nav-button {
-  background: #ff4d4d;
-  border: none;
+.logout-button {
+  background-color: #ef4444;
   color: white;
+  border: none;
   padding: 8px 16px;
   border-radius: 6px;
   cursor: pointer;
@@ -70,11 +76,9 @@
   transition: all 0.25s ease;
 }
 
-.nav-button:hover,
-.nav-button:focus {
-  background: #ff1a1a;
+.logout-button:hover {
+  background-color: #dc2626;
   transform: translateY(-2px);
-  outline: none; /* keyboard navigation */
 }
 
 /* Mobile Responsive */

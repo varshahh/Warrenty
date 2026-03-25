@@ -3,7 +3,6 @@ import { Link, useNavigate } from "react-router-dom";
 import { FaDownload } from "react-icons/fa";
 
 const BASE_URL = "http://127.0.0.1:5000";
-const FRONTEND_URL = "http://localhost:3000";
 
 function Dashboard() {
   const navigate = useNavigate();
@@ -104,26 +103,10 @@ function Dashboard() {
     }
   };
 
-  // ---------------- SHARE PRODUCT ----------------
-  const shareProduct = (product) => {
-    const productLink = `${FRONTEND_URL}/product/${product.product_id}`;
-
-    if (navigator.share) {
-      navigator.share({
-        title: product.product_name,
-        text: "View warranty details",
-        url: productLink
-      });
-    } else {
-      navigator.clipboard.writeText(productLink);
-      alert("Product link copied!");
-    }
-  };
-
   const getBadgeColor = (status) => {
-    if (status === "Active") return "#28a745";
-    if (status === "Expiring Soon") return "#ffc107";
-    if (status === "Expired") return "#dc3545";
+    if (status === "Active") return "#22c55e";
+    if (status === "Expiring Soon") return "#facc15";
+    if (status === "Expired") return "#ef4444";
     return "#6c757d";
   };
 
@@ -138,25 +121,15 @@ function Dashboard() {
 
   if (loading)
     return (
-      <div
-        style={{
-          textAlign: "center",
-          marginTop: "100px",
-          fontSize: "20px"
-        }}
-      >
-        Loading dashboard...
+      <div className="page-center">
+        <div className="glass-card">
+          Loading dashboard...
+        </div>
       </div>
     );
 
   return (
-    <div
-      style={{
-        padding: "40px",
-        minHeight: "100vh",
-        background: "linear-gradient(to right,#f5f7fa,#c3cfe2)"
-      }}
-    >
+    <div style={{ padding: "30px" }}>
       <h1>📦 Warranty Dashboard</h1>
 
       {message && (
@@ -173,43 +146,35 @@ function Dashboard() {
         }}
       >
         <StatCard title="Total" value={total} color="#4facfe" />
-        <StatCard title="Active" value={active} color="#28a745" />
-        <StatCard title="Expiring" value={expiring} color="#ffc107" />
-        <StatCard title="Expired" value={expired} color="#dc3545" />
+        <StatCard title="Active" value={active} color="#22c55e" />
+        <StatCard title="Expiring" value={expiring} color="#facc15" />
+        <StatCard title="Expired" value={expired} color="#ef4444" />
       </div>
 
-      {/* SEARCH + UPLOAD */}
+      {/* SEARCH */}
       <div
         style={{
           display: "flex",
-          justifyContent: "space-between",
-          marginBottom: "20px"
+          justifyContent: "center",
+          marginBottom: "30px"
         }}
       >
         <input
           type="text"
-          placeholder="Search product..."
+          placeholder="🔍 Search product..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          style={{
-            padding: "10px",
-            borderRadius: "8px",
-            width: "250px"
-          }}
+          style={searchStyle}
         />
-
-        <Link to="/upload-bill" style={linkStyle("#764ba2")}>
-          Upload Bill
-        </Link>
       </div>
 
       {/* PRODUCTS */}
       {filteredProducts.length === 0 ? (
         <div
+          className="glass-card"
           style={{
             textAlign: "center",
-            padding: "40px",
-            background: "#fff"
+            padding: "40px"
           }}
         >
           No products yet. Upload a bill to get started.
@@ -225,7 +190,6 @@ function Dashboard() {
           {filteredProducts.map((p) => {
             const daysRemaining = p.days_remaining || 0;
 
-            // NEW PROGRESS CALCULATION USING DATES
             const purchase = new Date(p.purchase_date);
             const expiry = new Date(p.expiry_date);
             const totalDays =
@@ -238,19 +202,15 @@ function Dashboard() {
             const qrURL = `${BASE_URL}${p.qr_url}`;
 
             return (
-              <div
-                key={p.product_id}
-                style={{
-                  background: "#fff",
-                  borderRadius: "12px",
-                  padding: "20px",
-                  boxShadow: "0 8px 20px rgba(0,0,0,0.1)"
-                }}
-              >
+              <div key={p.product_id} className="glass-card">
                 <h3>
                   <Link
                     to={`/product/${p.product_id}`}
-                    style={{ color: "#333" }}
+                    style={{
+                      color: "#0f172a",
+                      fontWeight: "600",
+                      textDecoration: "none"
+                    }}
                   >
                     {p.product_name}
                   </Link>
@@ -276,48 +236,39 @@ function Dashboard() {
                   />
                 </div>
 
-                <div style={{ marginTop: "10px" }}>
+                <div style={buttonGrid}>
                   <button
                     onClick={() => setPreviewBill(billURL)}
-                    style={buttonStyle("#17a2b8")}
+                    className="btn-primary"
                   >
                     View
                   </button>
 
                   <button
-                    onClick={() =>
-                      forceDownload(billURL, "bill.png")
-                    }
-                    style={buttonStyle("#4facfe")}
+                    onClick={() => forceDownload(billURL, "bill.png")}
+                    className="btn-primary"
                   >
                     <FaDownload /> Bill
                   </button>
 
-                  <button
-                    onClick={() => shareProduct(p)}
-                    style={buttonStyle("#28a745")}
-                  >
-                    Share
-                  </button>
+                  
 
                   <Link
                     to={`/edit-product/${p.product_id}`}
-                    style={linkStyle("#ffc107", "#000")}
+                    className="btn-primary"
                   >
                     Edit
                   </Link>
 
                   <button
                     onClick={() => deleteProduct(p.product_id)}
-                    style={buttonStyle("#dc3545")}
+                    className="btn-primary"
                   >
                     Delete
                   </button>
-                </div>
+                  </div>
 
-                <div
-                  style={{ textAlign: "center", marginTop: "10px" }}
-                >
+                <div style={{ textAlign: "center", marginTop: "10px" }}>
                   <img
                     src={qrURL}
                     alt="QR"
@@ -348,9 +299,21 @@ function Dashboard() {
   );
 }
 
-// ---------------- COMPONENTS ----------------
+const searchStyle = {
+  padding: "12px 18px",
+  borderRadius: "10px",
+  border: "none",
+  outline: "none",
+  width: "350px",
+  maxWidth: "100%",
+  background: "rgba(255,255,255,0.15)",
+  backdropFilter: "blur(10px)",
+  color: "white",
+  fontSize: "14px"
+};
+
 const StatCard = ({ title, value, color }) => (
-  <div style={{ background: "#fff", padding: "20px", borderRadius: "10px" }}>
+  <div className="glass-card" style={{ textAlign: "center" }}>
     <h4>{title}</h4>
     <h2 style={{ color }}>{value}</h2>
   </div>
@@ -378,24 +341,10 @@ const PreviewModal = ({ src, onClose }) => (
     />
   </div>
 );
-
-const buttonStyle = (bg) => ({
-  margin: "5px",
-  background: bg,
-  color: "#fff",
-  border: "none",
-  padding: "6px 10px",
-  borderRadius: "6px",
-  cursor: "pointer"
-});
-
-const linkStyle = (bg, color = "#fff") => ({
-  margin: "5px",
-  background: bg,
-  color,
-  padding: "6px 10px",
-  borderRadius: "6px",
-  textDecoration: "none"
-});
-
+const buttonGrid = {
+  display: "grid",
+  gridTemplateColumns: "repeat(2,1fr)",
+  gap: "8px",
+  marginTop: "12px"
+};
 export default Dashboard;
