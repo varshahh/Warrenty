@@ -68,12 +68,10 @@ function Dashboard() {
         }
       });
 
-      const data = await res.json();
-
       if (res.ok) {
         fetchProducts();
       } else {
-        alert(data.message || "Delete failed");
+        alert("Delete failed");
       }
     } catch (err) {
       console.error(err);
@@ -103,13 +101,6 @@ function Dashboard() {
     }
   };
 
-  const getBadgeColor = (status) => {
-    if (status === "Active") return "#22c55e";
-    if (status === "Expiring Soon") return "#facc15";
-    if (status === "Expired") return "#ef4444";
-    return "#6c757d";
-  };
-
   const filteredProducts = products.filter((p) =>
     p.product_name?.toLowerCase().includes(search.toLowerCase())
   );
@@ -122,9 +113,7 @@ function Dashboard() {
   if (loading)
     return (
       <div className="page-center">
-        <div className="glass-card">
-          Loading dashboard...
-        </div>
+        <div className="glass-card">Loading dashboard...</div>
       </div>
     );
 
@@ -152,13 +141,7 @@ function Dashboard() {
       </div>
 
       {/* SEARCH */}
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          marginBottom: "30px"
-        }}
-      >
+      <div style={{ display: "flex", justifyContent: "center", marginBottom: "30px" }}>
         <input
           type="text"
           placeholder="🔍 Search product..."
@@ -170,13 +153,7 @@ function Dashboard() {
 
       {/* PRODUCTS */}
       {filteredProducts.length === 0 ? (
-        <div
-          className="glass-card"
-          style={{
-            textAlign: "center",
-            padding: "40px"
-          }}
-        >
+        <div className="glass-card" style={{ textAlign: "center", padding: "40px" }}>
           No products yet. Upload a bill to get started.
         </div>
       ) : (
@@ -192,11 +169,14 @@ function Dashboard() {
 
             const purchase = new Date(p.purchase_date);
             const expiry = new Date(p.expiry_date);
-            const totalDays =
-              (expiry - purchase) / (1000 * 60 * 60 * 24);
+            const totalDays = (expiry - purchase) / (1000 * 60 * 60 * 24);
 
-            const progress =
-              totalDays > 0 ? (daysRemaining / totalDays) * 100 : 0;
+            const rawProgress =
+              totalDays > 0
+                ? ((totalDays - daysRemaining) / totalDays) * 100
+                : 0;
+
+            const progress = Math.min(Math.max(rawProgress, 0), 100);
 
             const billURL = `${BASE_URL}${p.bill_url}`;
             const qrURL = `${BASE_URL}${p.qr_url}`;
@@ -207,12 +187,12 @@ function Dashboard() {
                   <Link
                     to={`/product/${p.product_id}`}
                     style={{
-                      color: "#0f172a",
+                      color: "#1e293b",
                       fontWeight: "600",
                       textDecoration: "none"
                     }}
                   >
-                    {p.product_name}
+                    {p.product_name || "Unknown Product"}
                   </Link>
                 </h3>
 
@@ -220,27 +200,30 @@ function Dashboard() {
                 <p>⏳ Expiry: {p.expiry_date}</p>
                 <p>Days Left: {daysRemaining}</p>
 
+                {/* PROGRESS BAR */}
                 <div
                   style={{
-                    background: "#eee",
+                    width: "100%",
                     height: "8px",
-                    borderRadius: "5px"
+                    background: "rgba(0,0,0,0.1)",
+                    borderRadius: "10px",
+                    overflow: "hidden",
+                    marginTop: "10px"
                   }}
                 >
                   <div
                     style={{
                       width: `${progress}%`,
                       height: "100%",
-                      background: getBadgeColor(p.status)
+                      background:
+                        "linear-gradient(90deg, #00ffcc, #22c55e)",
+                      transition: "width 0.5s ease"
                     }}
                   />
                 </div>
 
                 <div style={buttonGrid}>
-                  <button
-                    onClick={() => setPreviewBill(billURL)}
-                    className="btn-primary"
-                  >
+                  <button onClick={() => setPreviewBill(billURL)} className="btn-primary">
                     View
                   </button>
 
@@ -251,12 +234,7 @@ function Dashboard() {
                     <FaDownload /> Bill
                   </button>
 
-                  
-
-                  <Link
-                    to={`/edit-product/${p.product_id}`}
-                    className="btn-primary"
-                  >
+                  <Link to={`/edit-product/${p.product_id}`} className="btn-primary">
                     Edit
                   </Link>
 
@@ -266,7 +244,7 @@ function Dashboard() {
                   >
                     Delete
                   </button>
-                  </div>
+                </div>
 
                 <div style={{ textAlign: "center", marginTop: "10px" }}>
                   <img
@@ -282,22 +260,25 @@ function Dashboard() {
         </div>
       )}
 
-      {previewBill && (
-        <PreviewModal
-          src={previewBill}
-          onClose={() => setPreviewBill(null)}
-        />
-      )}
-
-      {qrPreview && (
-        <PreviewModal
-          src={qrPreview}
-          onClose={() => setQrPreview(null)}
-        />
-      )}
+      {previewBill && <PreviewModal src={previewBill} onClose={() => setPreviewBill(null)} />}
+      {qrPreview && <PreviewModal src={qrPreview} onClose={() => setQrPreview(null)} />}
     </div>
   );
 }
+
+// ✅ FIXED STAT CARD
+const StatCard = ({ title, value, color }) => (
+  <div
+    className="glass-card"
+    style={{
+      textAlign: "center",
+      color: "#1e293b"
+    }}
+  >
+    <h4>{title}</h4>
+    <h2 style={{ color }}>{value}</h2>
+  </div>
+);
 
 const searchStyle = {
   padding: "12px 18px",
@@ -309,15 +290,7 @@ const searchStyle = {
   background: "rgba(255,255,255,0.15)",
   backdropFilter: "blur(10px)",
   color: "white",
-  fontSize: "14px"
 };
-
-const StatCard = ({ title, value, color }) => (
-  <div className="glass-card" style={{ textAlign: "center" }}>
-    <h4>{title}</h4>
-    <h2 style={{ color }}>{value}</h2>
-  </div>
-);
 
 const PreviewModal = ({ src, onClose }) => (
   <div
@@ -334,17 +307,15 @@ const PreviewModal = ({ src, onClose }) => (
       alignItems: "center"
     }}
   >
-    <img
-      src={src}
-      alt="preview"
-      style={{ maxWidth: "80%", maxHeight: "80%" }}
-    />
+    <img src={src} alt="preview" style={{ maxWidth: "80%", maxHeight: "80%" }} />
   </div>
 );
+
 const buttonGrid = {
   display: "grid",
   gridTemplateColumns: "repeat(2,1fr)",
   gap: "8px",
   marginTop: "12px"
 };
+
 export default Dashboard;

@@ -37,7 +37,6 @@ function EditProduct() {
         if (res.ok) {
           setProductName(data.product_name || "");
           setPurchaseDate(data.purchase_date || "");
-
           setWarrantyDays(
             data.warranty_days ? Number(data.warranty_days) : 365
           );
@@ -114,68 +113,74 @@ function EditProduct() {
 
   // ---------------- LOADING ----------------
   if (loading) {
-    return (
-      <h2 style={{ textAlign: "center", marginTop: "80px", color: "white" }}>
-        Loading Product...
-      </h2>
-    );
+    return <h2 style={loadingStyle}>Loading Product...</h2>;
   }
 
   // ---------------- UI ----------------
   return (
     <div style={pageStyle}>
       <div style={cardStyle}>
-        <h2 style={{ marginBottom: "25px" }}>✏ Edit Product</h2>
+        <h2 style={titleStyle}>✏ Edit Product</h2>
 
-        <form
-          onSubmit={handleSubmit}
-          style={{ display: "flex", flexDirection: "column" }}
-        >
-          <input
-            type="text"
-            placeholder="Product Name"
-            value={productName}
-            onChange={(e) => setProductName(e.target.value)}
-            required
-            style={inputStyle}
-          />
+        <form onSubmit={handleSubmit} style={{ width: "100%" }}>
+          
+          {/* Product Name */}
+          <div style={inputGroup}>
+            <span style={iconStyle}>🛒</span>
+            <input
+              type="text"
+              placeholder="Product Name"
+              value={productName}
+              onChange={(e) => setProductName(e.target.value)}
+              required
+              style={inputStyle}
+            />
+          </div>
 
-          <input
-            type="date"
-            value={purchaseDate}
-            onChange={(e) => setPurchaseDate(e.target.value)}
-            required
-            style={inputStyle}
-          />
+          {/* Purchase Date */}
+          <div style={inputGroup}>
+            <span style={iconStyle}>📅</span>
+            <input
+              type="date"
+              value={purchaseDate}
+              onChange={(e) => setPurchaseDate(e.target.value)}
+              required
+              style={inputStyle}
+            />
+          </div>
 
-          <input
-            type="number"
-            placeholder="Warranty Days"
-            value={warrantyDays}
-            onChange={(e) => setWarrantyDays(e.target.value)}
-            required
-            min="1"
-            style={inputStyle}
-          />
+          {/* Warranty */}
+          <div style={inputGroup}>
+            <span style={iconStyle}>⏳</span>
+            <input
+              type="number"
+              placeholder="Warranty Days"
+              value={warrantyDays}
+              onChange={(e) => setWarrantyDays(e.target.value)}
+              required
+              min="1"
+              style={inputStyle}
+            />
+          </div>
 
-          <button type="submit" disabled={saving} style={buttonStyle}>
+          <button
+            type="submit"
+            disabled={saving}
+            style={buttonStyle}
+            onMouseEnter={(e) => {
+              e.target.style.transform = "scale(1.03)";
+              e.target.style.boxShadow = "0 8px 20px rgba(0,0,0,0.3)";
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.transform = "scale(1)";
+              e.target.style.boxShadow = "none";
+            }}
+          >
             {saving ? "Updating..." : "Update Product"}
           </button>
         </form>
 
-        {message && (
-          <p
-            style={{
-              marginTop: "15px",
-              fontWeight: "bold",
-              color: message.includes("success")
-                ? "#90ee90"
-                : "#ffb3b3",
-            }}
-          >
-            {message}
-          </p>
-        )}
+        {message && <p style={messageStyle(message)}>{message}</p>}
       </div>
     </div>
   );
@@ -183,45 +188,80 @@ function EditProduct() {
 
 // ---------------- STYLES ----------------
 
+// ✅ FIXED: removed background from here
 const pageStyle = {
   minHeight: "100vh",
   display: "flex",
   justifyContent: "center",
   alignItems: "center",
-  padding: "20px",
 };
 
 const cardStyle = {
   width: "100%",
   maxWidth: "420px",
-  padding: "40px",
-  borderRadius: "16px",
+  padding: "35px",
+  borderRadius: "20px",
   background: "rgba(255,255,255,0.15)",
-  backdropFilter: "blur(14px)",
-  WebkitBackdropFilter: "blur(14px)",
-  boxShadow: "0 8px 32px rgba(0,0,0,0.2)",
+  backdropFilter: "blur(18px)",
+  WebkitBackdropFilter: "blur(18px)",
+  boxShadow: "0 8px 32px rgba(0,0,0,0.3)",
   border: "1px solid rgba(255,255,255,0.2)",
-  textAlign: "center",
   color: "white",
 };
 
+const titleStyle = {
+  marginBottom: "25px",
+  fontSize: "22px",
+  fontWeight: "600",
+  textAlign: "center",
+};
+
+const inputGroup = {
+  position: "relative",
+  marginBottom: "18px",
+};
+
+const iconStyle = {
+  position: "absolute",
+  left: "12px",
+  top: "50%",
+  transform: "translateY(-50%)",
+  fontSize: "14px",
+};
+
 const inputStyle = {
-  marginBottom: "15px",
-  padding: "12px",
-  borderRadius: "8px",
-  border: "none",
+  width: "100%",
+  padding: "12px 12px 12px 38px",
+  borderRadius: "10px",
+  background: "rgba(255,255,255,0.2)",
+  border: "1px solid rgba(255,255,255,0.3)",
+  color: "white",
   outline: "none",
 };
 
 const buttonStyle = {
+  width: "100%",
   padding: "12px",
-  borderRadius: "8px",
+  borderRadius: "12px",
   border: "none",
-  background: "linear-gradient(135deg,#43cea2,#185a9d)",
+  background: "linear-gradient(135deg,#6a11cb,#2575fc)",
   color: "#fff",
   fontWeight: "bold",
   cursor: "pointer",
-  transition: "0.3s",
+  transition: "all 0.3s ease",
+};
+
+const messageStyle = (msg) => ({
+  marginTop: "15px",
+  fontWeight: "bold",
+  textAlign: "center",
+  color: msg.includes("success") ? "#90ee90" : "#ffb3b3",
+});
+
+const loadingStyle = {
+  textAlign: "center",
+  marginTop: "80px",
+  color: "white",
 };
 
 export default EditProduct;

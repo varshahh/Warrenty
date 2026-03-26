@@ -93,17 +93,14 @@ function UploadBill() {
     <div className="page-center">
       <div
         className="glass-card"
-        style={{
-          width: "420px",
-          textAlign: "center"
-        }}
+        style={{ width: "420px", textAlign: "center" }}
       >
         <h1 style={{ marginBottom: "20px" }}>
           📤 Upload Bill
         </h1>
 
         <form onSubmit={handleUpload}>
-          
+
           {/* DRAG AREA */}
           <div
             onDragOver={(e) => {
@@ -118,62 +115,80 @@ function UploadBill() {
             }}
             style={{
               border: dragging
-                ? "2px solid #4facfe"
-                : "2px dashed rgba(255,255,255,0.3)",
-              borderRadius: "12px",
-              padding: "30px",
+                ? "2px solid #00ffcc"
+                : "2px dashed rgba(255,255,255,0.4)",
+              borderRadius: "14px",
+              padding: "35px 20px",
               marginBottom: "20px",
               background: dragging
-                ? "rgba(255,255,255,0.15)"
+                ? "rgba(0,255,204,0.1)"
                 : "rgba(255,255,255,0.05)",
-              transition: "0.3s"
+              transition: "all 0.3s ease",
+              position: "relative",
+              cursor: "pointer"
             }}
           >
-            <p style={{ marginBottom: "10px", fontWeight: "500" }}>
-              Drag & Drop Bill Image
+            {/* ICON */}
+            <div style={{ fontSize: "32px", marginBottom: "10px" }}>
+              📤
+            </div>
+
+            <p style={{ fontWeight: "600", marginBottom: "6px" }}>
+              Drop your bill here
             </p>
 
+            <p style={{ fontSize: "12px", opacity: 0.7 }}>
+              or click to browse
+            </p>
+
+            {/* HIDDEN INPUT */}
             <input
               type="file"
               accept="image/*"
               onChange={(e) =>
                 handleFileChange(e.target.files[0])
               }
+              style={{
+                position: "absolute",
+                width: "100%",
+                height: "100%",
+                top: 0,
+                left: 0,
+                opacity: 0,
+                cursor: "pointer"
+              }}
             />
           </div>
 
           {/* PREVIEW */}
           {preview && (
             <div style={{ marginBottom: "20px" }}>
-              <p style={{ fontWeight: "bold" }}>
-                Preview
-              </p>
-
               <img
                 src={preview}
                 alt="Bill Preview"
                 style={{
                   width: "100%",
-                  borderRadius: "12px"
+                  borderRadius: "12px",
+                  marginBottom: "8px"
                 }}
               />
 
-              <p
-                style={{
-                  fontSize: "14px",
-                  marginTop: "6px"
-                }}
-              >
+              <p style={{ fontSize: "13px", opacity: 0.8 }}>
                 {file.name}
               </p>
 
               <button
                 type="button"
                 onClick={removeFile}
-                className="btn-primary"
                 style={{
+                  marginTop: "10px",
+                  padding: "8px 12px",
+                  borderRadius: "8px",
+                  border: "none",
                   background:
-                    "linear-gradient(135deg,#ef4444,#dc2626)"
+                    "linear-gradient(135deg,#ef4444,#dc2626)",
+                  color: "white",
+                  cursor: "pointer"
                 }}
               >
                 Remove
@@ -187,12 +202,18 @@ function UploadBill() {
             disabled={uploading}
             className="btn-primary"
             style={{ width: "100%" }}
+            onMouseEnter={(e) => {
+              e.target.style.transform = "scale(1.03)";
+              e.target.style.boxShadow =
+                "0 8px 20px rgba(0,0,0,0.3)";
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.transform = "scale(1)";
+              e.target.style.boxShadow = "none";
+            }}
           >
-            {uploading
-              ? "Uploading..."
-              : "Upload & Create"}
+            {uploading ? "Uploading..." : "Upload & Create"}
           </button>
-
         </form>
 
         {message && (
