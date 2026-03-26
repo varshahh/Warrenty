@@ -17,7 +17,6 @@ function Dashboard() {
   // ---------------- FETCH PRODUCTS ----------------
   const fetchProducts = useCallback(async () => {
     const token = localStorage.getItem("token");
-
     if (!token) {
       setMessage("Please login first!");
       setLoading(false);
@@ -29,9 +28,7 @@ function Dashboard() {
 
     try {
       const res = await fetch(`${BASE_URL}/dashboard`, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
+        headers: { Authorization: `Bearer ${token}` }
       });
 
       const data = await res.json();
@@ -49,30 +46,21 @@ function Dashboard() {
     }
   }, [navigate]);
 
-  useEffect(() => {
-    fetchProducts();
-  }, [fetchProducts]);
+  useEffect(() => { fetchProducts(); }, [fetchProducts]);
 
   // ---------------- DELETE PRODUCT ----------------
   const deleteProduct = async (id) => {
     if (!window.confirm("Delete this product?")) return;
-
     const token = localStorage.getItem("token");
     if (!token) return;
 
     try {
       const res = await fetch(`${BASE_URL}/delete_product/${id}`, {
         method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
+        headers: { Authorization: `Bearer ${token}` }
       });
-
-      if (res.ok) {
-        fetchProducts();
-      } else {
-        alert("Delete failed");
-      }
+      if (res.ok) fetchProducts();
+      else alert("Delete failed");
     } catch (err) {
       console.error(err);
       alert("Server error");
@@ -89,11 +77,9 @@ function Dashboard() {
       const link = document.createElement("a");
       link.href = blobUrl;
       link.download = filename;
-
       document.body.appendChild(link);
       link.click();
       link.remove();
-
       window.URL.revokeObjectURL(blobUrl);
     } catch (err) {
       console.error(err);
@@ -110,30 +96,15 @@ function Dashboard() {
   const expiring = products.filter((p) => p.status === "Expiring Soon").length;
   const expired = products.filter((p) => p.status === "Expired").length;
 
-  if (loading)
-    return (
-      <div className="page-center">
-        <div className="glass-card">Loading dashboard...</div>
-      </div>
-    );
+  if (loading) return <div className="page-center"><div className="glass-card">Loading dashboard...</div></div>;
 
   return (
     <div style={{ padding: "30px" }}>
       <h1>📦 Warranty Dashboard</h1>
-
-      {message && (
-        <p style={{ color: "red", fontWeight: "bold" }}>{message}</p>
-      )}
+      {message && <p style={{ color: "red", fontWeight: "bold" }}>{message}</p>}
 
       {/* STAT CARDS */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit,minmax(200px,1fr))",
-          gap: "20px",
-          marginBottom: "30px"
-        }}
-      >
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(200px,1fr))", gap: "20px", marginBottom: "30px" }}>
         <StatCard title="Total" value={total} color="#4facfe" />
         <StatCard title="Active" value={active} color="#22c55e" />
         <StatCard title="Expiring" value={expiring} color="#facc15" />
@@ -153,30 +124,23 @@ function Dashboard() {
 
       {/* PRODUCTS */}
       {filteredProducts.length === 0 ? (
-        <div className="glass-card" style={{ textAlign: "center", padding: "40px" }}>
-          No products yet. Upload a bill to get started.
-        </div>
+        <div className="glass-card" style={{ textAlign: "center", padding: "40px" }}>No products yet. Upload a bill to get started.</div>
       ) : (
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit,minmax(300px,1fr))",
-            gap: "20px"
-          }}
-        >
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(300px,1fr))", gap: "20px" }}>
           {filteredProducts.map((p) => {
-            const daysRemaining = p.days_remaining || 0;
-
             const purchase = new Date(p.purchase_date);
             const expiry = new Date(p.expiry_date);
-            const totalDays = (expiry - purchase) / (1000 * 60 * 60 * 24);
+            const totalDays = Math.ceil((expiry - purchase) / (1000 * 60 * 60 * 24));
+            const daysRemaining = Math.min(Math.max(p.days_remaining || 0, 0), totalDays);
 
-            const rawProgress =
-              totalDays > 0
-                ? ((totalDays - daysRemaining) / totalDays) * 100
-                : 0;
+            // progress percentage
+            const progress = (daysRemaining / totalDays) * 100;
 
-            const progress = Math.min(Math.max(rawProgress, 0), 100);
+            // bar color logic
+            let barColor = "#22c55e"; // default green
+            const fraction = daysRemaining / totalDays;
+            if (fraction <= 0.25) barColor = "#ef4444"; // red
+            else if (fraction <= 0.5) barColor = "#facc15"; // yellow
 
             const billURL = `${BASE_URL}${p.bill_url}`;
             const qrURL = `${BASE_URL}${p.qr_url}`;
@@ -184,14 +148,7 @@ function Dashboard() {
             return (
               <div key={p.product_id} className="glass-card">
                 <h3>
-                  <Link
-                    to={`/product/${p.product_id}`}
-                    style={{
-                      color: "#1e293b",
-                      fontWeight: "600",
-                      textDecoration: "none"
-                    }}
-                  >
+                  <Link to={`/product/${p.product_id}`} style={{ color: "#1e293b", fontWeight: "600", textDecoration: "none" }}>
                     {p.product_name || "Unknown Product"}
                   </Link>
                 </h3>
@@ -201,58 +158,19 @@ function Dashboard() {
                 <p>Days Left: {daysRemaining}</p>
 
                 {/* PROGRESS BAR */}
-                <div
-                  style={{
-                    width: "100%",
-                    height: "8px",
-                    background: "rgba(0,0,0,0.1)",
-                    borderRadius: "10px",
-                    overflow: "hidden",
-                    marginTop: "10px"
-                  }}
-                >
-                  <div
-                    style={{
-                      width: `${progress}%`,
-                      height: "100%",
-                      background:
-                        "linear-gradient(90deg, #00ffcc, #22c55e)",
-                      transition: "width 0.5s ease"
-                    }}
-                  />
+                <div style={{ width: "100%", height: "8px", background: "rgba(0,0,0,0.1)", borderRadius: "10px", overflow: "hidden", marginTop: "10px" }}>
+                  <div style={{ width: `${progress}%`, height: "100%", background: barColor, transition: "width 0.5s ease" }} />
                 </div>
 
                 <div style={buttonGrid}>
-                  <button onClick={() => setPreviewBill(billURL)} className="btn-primary">
-                    View
-                  </button>
-
-                  <button
-                    onClick={() => forceDownload(billURL, "bill.png")}
-                    className="btn-primary"
-                  >
-                    <FaDownload /> Bill
-                  </button>
-
-                  <Link to={`/edit-product/${p.product_id}`} className="btn-primary">
-                    Edit
-                  </Link>
-
-                  <button
-                    onClick={() => deleteProduct(p.product_id)}
-                    className="btn-primary"
-                  >
-                    Delete
-                  </button>
+                  <button onClick={() => setPreviewBill(billURL)} className="btn-primary">View</button>
+                  <button onClick={() => forceDownload(billURL, "bill.png")} className="btn-primary"><FaDownload /> Bill</button>
+                  <Link to={`/edit-product/${p.product_id}`} className="btn-primary">Edit</Link>
+                  <button onClick={() => deleteProduct(p.product_id)} className="btn-primary">Delete</button>
                 </div>
 
                 <div style={{ textAlign: "center", marginTop: "10px" }}>
-                  <img
-                    src={qrURL}
-                    alt="QR"
-                    style={{ width: "80px", cursor: "pointer" }}
-                    onClick={() => setQrPreview(qrURL)}
-                  />
+                  <img src={qrURL} alt="QR" style={{ width: "80px", cursor: "pointer" }} onClick={() => setQrPreview(qrURL)} />
                 </div>
               </div>
             );
@@ -266,15 +184,9 @@ function Dashboard() {
   );
 }
 
-// ✅ FIXED STAT CARD
+// STAT CARD
 const StatCard = ({ title, value, color }) => (
-  <div
-    className="glass-card"
-    style={{
-      textAlign: "center",
-      color: "#1e293b"
-    }}
-  >
+  <div className="glass-card" style={{ textAlign: "center", color: "#1e293b" }}>
     <h4>{title}</h4>
     <h2 style={{ color }}>{value}</h2>
   </div>
@@ -293,20 +205,7 @@ const searchStyle = {
 };
 
 const PreviewModal = ({ src, onClose }) => (
-  <div
-    onClick={onClose}
-    style={{
-      position: "fixed",
-      top: 0,
-      left: 0,
-      width: "100%",
-      height: "100%",
-      background: "rgba(0,0,0,0.7)",
-      display: "flex",
-      justifyContent: "center",
-      alignItems: "center"
-    }}
-  >
+  <div onClick={onClose} style={{ position: "fixed", top: 0, left: 0, width: "100%", height: "100%", background: "rgba(0,0,0,0.7)", display: "flex", justifyContent: "center", alignItems: "center" }}>
     <img src={src} alt="preview" style={{ maxWidth: "80%", maxHeight: "80%" }} />
   </div>
 );
