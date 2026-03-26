@@ -17,6 +17,7 @@ import Dashboard from "./pages/Dashboard";
 import UploadBill from "./pages/UploadBill";
 import ProductDetails from "./pages/ProductDetails";
 import EditProduct from "./pages/EditProduct";
+import ForgotPassword from "./pages/ForgotPassword"; // ✅ Added
 
 // 🔥 Import Global CSS
 import "./App.css";
@@ -94,6 +95,7 @@ function App() {
           <Route element={<PublicRoute />}>
             <Route path="/register" element={<Register />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} /> {/* ✅ Added */}
           </Route>
 
           {/* PROTECTED ROUTES */}

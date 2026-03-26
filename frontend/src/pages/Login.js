@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 
 function Login() {
   const [email, setEmail] = useState("");
@@ -51,15 +51,23 @@ function Login() {
 
   return (
     <div className="page-center">
-      <div className="glass-card" style={{ width: "400px", textAlign: "center" }}>
-        
+      <div
+        className="glass-card"
+        style={{
+          width: "400px",
+          textAlign: "center"
+        }}
+      >
         <h1 style={{ marginBottom: "25px" }}>
           Smart Warranty
         </h1>
 
         <form
           onSubmit={handleLogin}
-          style={{ display: "flex", flexDirection: "column" }}
+          style={{
+            display: "flex",
+            flexDirection: "column"
+          }}
         >
           <input
             type="email"
@@ -79,6 +87,27 @@ function Login() {
             onChange={(e) => setPassword(e.target.value)}
           />
 
+          {/* Forgot Password */}
+          <div
+            style={{
+              textAlign: "right",
+              marginTop: "-5px",
+              marginBottom: "15px",
+              fontSize: "0.9rem"
+            }}
+          >
+            <Link
+              to="/forgot-password"
+              style={{
+                color: "#185a9d",
+                textDecoration: "none",
+                fontWeight: "500"
+              }}
+            >
+              Forgot Password?
+            </Link>
+          </div>
+
           <button
             type="submit"
             disabled={loading}
@@ -86,7 +115,6 @@ function Login() {
           >
             {loading ? "Logging in..." : "Login"}
           </button>
-
         </form>
 
         {message && (
@@ -103,7 +131,12 @@ function Login() {
           </p>
         )}
 
-        <p style={{ marginTop: "15px", fontSize: "0.9rem" }}>
+        <p
+          style={{
+            marginTop: "20px",
+            fontSize: "0.9rem"
+          }}
+        >
           Don't have an account?{" "}
           <span
             style={{

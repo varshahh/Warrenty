@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import axios from "axios";
 import { FaDownload } from "react-icons/fa";
 
 const BASE_URL = "http://127.0.0.1:5000";
@@ -12,11 +11,9 @@ function ProductDetails() {
   const [product, setProduct] = useState(null);
   const [preview, setPreview] = useState(null);
   const [qrPreview, setQrPreview] = useState(null);
-  const [billFile, setBillFile] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   const [loading, setLoading] = useState(true);
-  const [uploading, setUploading] = useState(false);
 
   // ---------------- FORCE DOWNLOAD ----------------
   const forceDownload = async (url, filename) => {
@@ -97,32 +94,6 @@ function ProductDetails() {
     }
   };
 
-  // ---------------- UPLOAD BILL ----------------
-  const handleBillUpload = async () => {
-    if (!billFile) return;
-
-    const token = localStorage.getItem("token");
-
-    const formData = new FormData();
-    formData.append("bill", billFile);
-    formData.append("product_id", id);
-
-    try {
-      setUploading(true);
-
-      await axios.post(`${BASE_URL}/upload_bill`, formData, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      fetchProduct();
-      setBillFile(null);
-    } catch (err) {
-      alert("Upload failed");
-    } finally {
-      setUploading(false);
-    }
-  };
-
   if (loading)
     return (
       <div className="page-center">
@@ -146,7 +117,16 @@ function ProductDetails() {
         className="glass-card"
         style={{ width: "520px", textAlign: "center" }}
       >
-        <h1>📄 Warranty Details</h1>
+        {/* Warranty Title */}
+        <h1
+          style={{
+            textAlign: "center",
+            marginBottom: "10px"
+          }}
+        >
+          Warranty Details
+        </h1>
+
         <h2>{product.product_name}</h2>
 
         <div style={{ marginBottom: "20px" }}>
@@ -193,7 +173,14 @@ function ProductDetails() {
         {/* BILL */}
         {product.bill_url && (
           <div style={{ marginTop: "30px" }}>
-            <h3>🧾 Bill</h3>
+            <h3
+              style={{
+                textAlign: "center",
+                marginBottom: "10px"
+              }}
+            >
+              Bill
+            </h3>
 
             <img
               src={`${BASE_URL}${product.bill_url}`}
@@ -223,26 +210,6 @@ function ProductDetails() {
             </button>
           </div>
         )}
-
-        {/* UPLOAD BILL */}
-        <div style={{ marginTop: "30px" }}>
-          <h3>Upload New Bill</h3>
-
-          <input
-            type="file"
-            onChange={(e) =>
-              setBillFile(e.target.files[0])
-            }
-          />
-
-          <button
-            className="btn-primary"
-            onClick={handleBillUpload}
-            disabled={uploading}
-          >
-            {uploading ? "Uploading..." : "Upload"}
-          </button>
-        </div>
 
         {/* QR */}
         {product.qr_url && (
