@@ -16,11 +16,11 @@ from flask_jwt_extended import (
 )
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
+from flask_mail import Mail, Message
+from apscheduler.schedulers.background import BackgroundScheduler
 import google.genai as genai
-from google.genai import types as genai_types
+from PIL import Image
 from dateutil.relativedelta import relativedelta
-
-# ---------------- CONFIG ----------------
 pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
 
 app = Flask(__name__)
@@ -35,6 +35,16 @@ app.config['JWT_SECRET_KEY'] = os.getenv("JWT_SECRET", "dev-secret-key")
 
 db = SQLAlchemy(app)
 jwt = JWTManager(app)
+
+# ---------------- MAIL CONFIG ----------------
+app.config['MAIL_SERVER'] = "smtp.gmail.com"
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USERNAME'] = "vsreekutty123@gmail.com"
+app.config['MAIL_PASSWORD'] = "rhwlyiyhcbmmzgqi"
+app.config['MAIL_DEFAULT_SENDER'] = "vsreekutty123@gmail.com"
+mail = Mail(app)
+
 
 # ---------------- GEMINI CONFIG ----------------
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
@@ -404,6 +414,26 @@ def login():
 
     return jsonify({"token": token, "name": user.name})
 
+
+# ---------------- FORGOT PASSWORD ----------------
+@app.route('/forgot-password', methods=['POST', 'OPTIONS'])
+def forgot_password():
+    if request.method == 'OPTIONS':
+        return '', 200
+    data = request.get_json()
+    email = data.get('email', '').strip()
+    new_password = data.get('new_password', '').strip()
+    if not email or not new_password:
+        return jsonify({'message': 'Email and new password required'}), 400
+    if len(new_password) < 6:
+        return jsonify({'message': 'Password must be at least 6 characters'}), 400
+    user = User.query.filter_by(email=email).first()
+    if not user:
+        return jsonify({'message': 'No account found with that email'}), 404
+    user.password = generate_password_hash(new_password)
+    db.session.commit()
+    return jsonify({'message': 'Password updated successfully'})
+
 # ---------------- UPLOAD ----------------
 @app.route('/upload_bill', methods=['POST'])
 @jwt_required()
@@ -682,7 +712,50 @@ def qr_file(filename):
         as_attachment=True
     )
 
+
+# ---------------- EMAIL ALERTS ----------------
+def send_expiry_alert(user_email, user_name, product_name, days_remaining, expiry_date):
+    try:
+        if not app.config['MAIL_USERNAME']:
+            return
+        days_word = 'Day' if days_remaining == 1 else 'Days'
+        subject = f"Warning: Warranty Expiring in {days_remaining} {days_word}!"
+        body = f"Hi {user_name},\n\nYour warranty for '{product_name}' expires in {days_remaining} {days_word.lower()}.\nExpiry Date: {expiry_date}\n\n- Smart Warranty Team"
+        msg = Message(subject=subject, recipients=[user_email], body=body)
+        mail.send(msg)
+        print(f"Alert sent to {user_email} for {product_name} ({days_remaining}d left)")
+    except Exception as e:
+        print(f"MAIL ERROR: {e}")
+
+def check_warranty_alerts():
+    with app.app_context():
+        today = datetime.today().date()
+        for p in Product.query.all():
+            days_left = (p.expiry_date - today).days
+            if days_left in [5, 3, 1]:
+                user = User.query.get(p.user_id)
+                if user and user.email:
+                    send_expiry_alert(user.email, user.name, p.product_name, days_left, p.expiry_date.strftime("%Y-%m-%d"))
+
+scheduler = BackgroundScheduler()
+scheduler.add_job(check_warranty_alerts, 'cron', hour=9, minute=0)
+scheduler.start()
+
+@app.route('/test_alerts', methods=['GET'])
+def test_alerts():
+    check_warranty_alerts()
+    return jsonify({"message": "Alert check triggered"})
+
+@app.route('/set_expiry/<int:id>/<int:days>', methods=['GET'])
+def set_expiry(id, days):
+    product = Product.query.get(id)
+    if not product:
+        return jsonify({"message": "Not found"}), 404
+    product.expiry_date = datetime.today().date() + timedelta(days=days)
+    db.session.commit()
+    return jsonify({"message": f"Expiry set to {product.expiry_date}"})
 # ---------------- RUN ----------------
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
+
 
