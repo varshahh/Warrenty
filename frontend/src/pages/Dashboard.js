@@ -6,7 +6,7 @@ import autoTable from "jspdf-autotable";
 
 const BASE_URL = "http://127.0.0.1:5000";
 
-const CATEGORIES = ["All", "Electronics", "Appliances", "Furniture", "Vehicle", "Mobile", "Laptop", "Other"];
+const CATEGORIES = ["All", "Electronics", "Appliances", "Furniture", "Mobile", "Laptop", "Other"];
 
 function Dashboard() {
   const navigate = useNavigate();

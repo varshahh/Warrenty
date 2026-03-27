@@ -148,7 +148,7 @@ function EditProduct() {
               onChange={(e) => setCategory(e.target.value)}
               style={inputStyle}
             >
-              {["Electronics","Appliances","Furniture","Vehicle","Mobile","Laptop","Other"].map(c => (
+              {["Electronics","Appliances","Furniture","Mobile","Laptop","Other"].map(c => (
                 <option key={c} value={c}>{c}</option>
               ))}
             </select>

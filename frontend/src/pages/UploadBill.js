@@ -9,7 +9,6 @@ function UploadBill() {
   const [message, setMessage] = useState("");
   const [uploading, setUploading] = useState(false);
   const [dragging, setDragging] = useState(false);
-  const [category, setCategory] = useState("Other");
 
   const BASE_URL = "http://127.0.0.1:5000";
 
@@ -56,7 +55,6 @@ function UploadBill() {
 
     const formData = new FormData();
     formData.append("bill", file);
-    formData.append("category", category);
 
     try {
       setUploading(true);
@@ -197,31 +195,6 @@ function UploadBill() {
               </button>
             </div>
           )}
-
-          {/* CATEGORY */}
-          <div style={{ marginBottom: "16px", textAlign: "left" }}>
-            <label style={{ fontSize: "13px", color: "rgba(255,255,255,0.8)", display: "block", marginBottom: "6px" }}>
-              🏷️ Category
-            </label>
-            <select
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              style={{
-                width: "100%",
-                padding: "10px 12px",
-                borderRadius: "10px",
-                background: "rgba(255,255,255,0.2)",
-                border: "1px solid rgba(255,255,255,0.3)",
-                color: "white",
-                outline: "none",
-                fontSize: "14px"
-              }}
-            >
-              {["Electronics","Appliances","Furniture","Vehicle","Mobile","Laptop","Other"].map(c => (
-                <option key={c} value={c} style={{ color: "#000" }}>{c}</option>
-              ))}
-            </select>
-          </div>
 
           {/* SUBMIT */}
           <button

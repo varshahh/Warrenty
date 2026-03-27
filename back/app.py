@@ -56,6 +56,13 @@ class Product(db.Model):
 
 with app.app_context():
     db.create_all()
+    # migrate: add category column if missing
+    from sqlalchemy import text as sa_text
+    with db.engine.connect() as conn:
+        cols = [row[1] for row in conn.execute(sa_text("PRAGMA table_info(product)"))]
+        if "category" not in cols:
+            conn.execute(sa_text("ALTER TABLE product ADD COLUMN category VARCHAR(100) DEFAULT 'Other'"))
+            conn.commit()
 
 # ---------------- HELPER FUNCTIONS ----------------
 def calculate_status(expiry_date):
