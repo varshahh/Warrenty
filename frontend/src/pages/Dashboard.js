@@ -1,12 +1,10 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { FaDownload } from "react-icons/fa";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
 
 const BASE_URL = "http://127.0.0.1:5000";
 
-const CATEGORIES = ["All", "Electronics", "Appliances", "Furniture", "Mobile", "Laptop", "Other"];
+const CATEGORIES = ["All", "Appliances", "Mobile", "Laptop", "Other"];
 
 function Dashboard() {
   const navigate = useNavigate();
@@ -94,51 +92,6 @@ function Dashboard() {
   };
 
   // ---------------- EXPORT CSV ----------------
-  const exportCSV = async () => {
-    const token = localStorage.getItem("token");
-    try {
-      const res = await fetch(`${BASE_URL}/export_csv`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      const blob = await res.blob();
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = "warranties.csv";
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
-    } catch {
-      alert("CSV export failed.");
-    }
-  };
-
-  // ---------------- EXPORT PDF ----------------
-  const exportPDF = () => {
-    const doc = new jsPDF();
-    doc.setFontSize(16);
-    doc.text("Smart Warranty - Warranty Report", 14, 15);
-    doc.setFontSize(10);
-    doc.text(`Generated: ${new Date().toLocaleDateString()}`, 14, 22);
-
-    autoTable(doc, {
-      startY: 28,
-      head: [["Product", "Category", "Purchase Date", "Expiry Date", "Days Left", "Status"]],
-      body: products.map(p => [
-        p.product_name,
-        p.category || "Other",
-        p.purchase_date,
-        p.expiry_date,
-        p.days_remaining,
-        p.status
-      ]),
-      styles: { fontSize: 9 },
-      headStyles: { fillColor: [24, 90, 157] }
-    });
-
-    doc.save("warranties.pdf");
-  };
 
   const filteredProducts = products.filter((p) => {
     const matchSearch = p.product_name?.toLowerCase().includes(search.toLowerCase());
@@ -175,8 +128,8 @@ function Dashboard() {
         <StatCard title="Expired" value={expired} color="#ef4444" />
       </div>
 
-      {/* SEARCH + EXPORT */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px", marginBottom: "16px" }}>
+      {/* SEARCH */}
+      <div style={{ display: "flex", justifyContent: "center", marginBottom: "16px" }}>
         <input
           type="text"
           placeholder="🔍 Search product..."
@@ -184,10 +137,6 @@ function Dashboard() {
           onChange={(e) => setSearch(e.target.value)}
           style={searchStyle}
         />
-        <div style={{ display: "flex", gap: "10px" }}>
-          <button onClick={exportCSV} style={exportBtn("#22c55e")}>⬇ CSV</button>
-          <button onClick={exportPDF} style={exportBtn("#ef4444")}>⬇ PDF</button>
-        </div>
       </div>
 
       {/* CATEGORY FILTER */}
@@ -316,17 +265,6 @@ const searchStyle = {
   backdropFilter: "blur(10px)",
   color: "white",
 };
-
-const exportBtn = (color) => ({
-  padding: "10px 18px",
-  borderRadius: "10px",
-  border: "none",
-  background: color,
-  color: "white",
-  fontWeight: "bold",
-  cursor: "pointer",
-  fontSize: "13px"
-});
 
 const catChip = (active) => ({
   padding: "6px 14px",

@@ -105,21 +105,23 @@ def ocr_extract(file_path):
         if img is None:
             return ""
 
-        img = cv2.resize(img, None, fx=1.5, fy=1.5, interpolation=cv2.INTER_CUBIC)
+        # upscale for better OCR accuracy
+        img = cv2.resize(img, None, fx=2.0, fy=2.0, interpolation=cv2.INTER_CUBIC)
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        gray = cv2.bilateralFilter(gray, 11, 17, 17)
 
-        thresh = cv2.adaptiveThreshold(
-            gray,
-            255,
-            cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
-            cv2.THRESH_BINARY,
-            11,
-            2
-        )
+        # denoise before thresholding
+        gray = cv2.fastNlMeansDenoising(gray, h=30)
 
-        config = r'--oem 3 --psm 6'
-        text = pytesseract.image_to_string(thresh, config=config)
+        # OTSU threshold works better than adaptive for most bill images
+        _, thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+
+        # run OCR with both page segmentation modes and pick the longer result
+        config_6  = r'--oem 3 --psm 6'
+        config_4  = r'--oem 3 --psm 4'
+        text6 = pytesseract.image_to_string(thresh, config=config_6)
+        text4 = pytesseract.image_to_string(thresh, config=config_4)
+        text = text6 if len(text6) >= len(text4) else text4
+
         return text
 
     except Exception as e:
@@ -127,6 +129,32 @@ def ocr_extract(file_path):
         return ""
 
 # ---------------- TEXT PARSER ----------------
+def clean_name(name):
+    """Remove junk characters, keep only printable alphanumeric + common punctuation."""
+    import unicodedata
+    cleaned = ""
+    for ch in name:
+        cat = unicodedata.category(ch)
+        # keep letters, numbers, spaces, hyphens, dots, slashes, parentheses
+        if cat.startswith("L") or cat.startswith("N") or ch in " -./()+&":
+            cleaned += ch
+    cleaned = " ".join(cleaned.split())  # collapse whitespace
+    return cleaned.strip()
+
+def is_valid_name(line):
+    """Return True if the line looks like a real product name."""
+    if len(line) < 4 or len(line) > 80:
+        return False
+    # reject lines that are mostly digits
+    digit_ratio = sum(c.isdigit() for c in line) / len(line)
+    if digit_ratio > 0.4:
+        return False
+    # reject lines with too many special/garbage characters
+    alpha_ratio = sum(c.isalpha() or c == " " for c in line) / len(line)
+    if alpha_ratio < 0.5:
+        return False
+    return True
+
 def parse_text(text):
     product_name = "Unknown Product"
     purchase_date = None
@@ -136,19 +164,22 @@ def parse_text(text):
 
     ignore_words = [
         "invoice", "bill", "gst", "tax", "amount", "total", "payment",
-        "cash", "upi", "customer", "date", "qty", "price", "rs"
+        "cash", "upi", "customer", "date", "qty", "price", "rs",
+        "receipt", "order", "serial", "model", "warranty", "card",
+        "thank", "visit", "again", "phone", "email", "address",
+        "shop", "store", "mart", "enterprise", "pvt", "ltd", "inc"
     ]
 
-    for line in lines[:25]:
-        clean = line.lower()
-        if any(word in clean for word in ignore_words):
+    for line in lines[:30]:
+        cleaned = clean_name(line)
+        lower = cleaned.lower()
+
+        if any(word in lower for word in ignore_words):
             continue
-        if len(clean) < 5:
-            continue
-        if sum(c.isdigit() for c in clean) > 3:
+        if not is_valid_name(cleaned):
             continue
 
-        product_name = line
+        product_name = cleaned
         break
 
     date_pattern = r'(\d{1,2}[\/\-.]\d{1,2}[\/\-.]\d{2,4})'
