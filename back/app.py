@@ -16,8 +16,8 @@ from flask_jwt_extended import (
 )
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
-import google.generativeai as genai
-from PIL import Image
+import google.genai as genai
+from google.genai import types as genai_types
 from dateutil.relativedelta import relativedelta
 
 # ---------------- CONFIG ----------------
@@ -38,10 +38,7 @@ jwt = JWTManager(app)
 
 # ---------------- GEMINI CONFIG ----------------
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
-if GEMINI_API_KEY:
-    genai.configure(api_key=GEMINI_API_KEY)
-
-# ---------------- CREATE FOLDERS ----------------
+gemini_client = genai.Client(api_key=GEMINI_API_KEY) if GEMINI_API_KEY else None
 os.makedirs(os.path.join(basedir, "uploads"), exist_ok=True)
 os.makedirs(os.path.join(basedir, "qrcodes"), exist_ok=True)
 
@@ -688,3 +685,4 @@ def qr_file(filename):
 # ---------------- RUN ----------------
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
+
