@@ -47,6 +47,7 @@ class User(db.Model):
 class Product(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     product_name = db.Column(db.String(200))
+    category = db.Column(db.String(100), default="Other")
     purchase_date = db.Column(db.Date)
     warranty_period = db.Column(db.String(50))
     expiry_date = db.Column(db.Date)
@@ -242,6 +243,7 @@ def upload_bill():
 
     product = Product(
         product_name=product_name,
+        category=request.form.get("category", "Other"),
         purchase_date=purchase_date_obj,
         warranty_period=str(warranty_days),
         expiry_date=expiry_date_obj,
@@ -277,6 +279,7 @@ def get_product(id):
 
     return jsonify({
         "product_name": product.product_name,
+        "category": product.category or "Other",
         "purchase_date": product.purchase_date.strftime("%Y-%m-%d"),
         "warranty_days": int(product.warranty_period),
         "expiry_date": product.expiry_date.strftime("%Y-%m-%d"),
@@ -306,6 +309,7 @@ def edit_product(id):
         return jsonify({"message": error}), 400
 
     product.product_name = data.get("product_name")
+    product.category = data.get("category", product.category or "Other")
     purchase_date_obj = datetime.strptime(
         data.get("purchase_date"), "%Y-%m-%d"
     ).date()
@@ -360,6 +364,7 @@ def dashboard():
         data.append({
             "product_id": p.id,
             "product_name": p.product_name,
+            "category": p.category or "Other",
             "purchase_date": p.purchase_date.strftime("%Y-%m-%d"),
             "expiry_date": p.expiry_date.strftime("%Y-%m-%d"),
             "status": status,
@@ -412,6 +417,37 @@ def update_profile():
 
     db.session.commit()
     return jsonify({"message": "Profile updated successfully", "name": user.name})
+
+# ---------------- EXPORT CSV ----------------
+@app.route('/export_csv', methods=['GET'])
+@jwt_required()
+def export_csv():
+    import csv, io
+    user_id = int(get_jwt_identity())
+    products = Product.query.filter_by(user_id=user_id).all()
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["Product Name", "Category", "Purchase Date", "Expiry Date", "Warranty Days", "Status", "Days Remaining"])
+
+    for p in products:
+        status, days = calculate_status(p.expiry_date)
+        writer.writerow([
+            p.product_name,
+            p.category or "Other",
+            p.purchase_date.strftime("%Y-%m-%d"),
+            p.expiry_date.strftime("%Y-%m-%d"),
+            p.warranty_period,
+            status,
+            days
+        ])
+
+    from flask import Response
+    return Response(
+        output.getvalue(),
+        mimetype="text/csv",
+        headers={"Content-Disposition": "attachment; filename=warranties.csv"}
+    )
 
 # ---------------- SERVE FILES ----------------
 @app.route('/uploads/<filename>')

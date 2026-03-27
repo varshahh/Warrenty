@@ -9,6 +9,7 @@ function EditProduct() {
   const navigate = useNavigate();
 
   const [productName, setProductName] = useState("");
+  const [category, setCategory] = useState("Other");
   const [warrantyDays, setWarrantyDays] = useState("");
   const [purchaseDate, setPurchaseDate] = useState("");
 
@@ -36,6 +37,7 @@ function EditProduct() {
 
         if (res.ok) {
           setProductName(data.product_name || "");
+          setCategory(data.category || "Other");
           setPurchaseDate(data.purchase_date || "");
           setWarrantyDays(
             data.warranty_days ? Number(data.warranty_days) : 365
@@ -87,6 +89,7 @@ function EditProduct() {
         },
         body: JSON.stringify({
           product_name: productName.trim(),
+          category,
           purchase_date: purchaseDate,
           warranty_days: Number(warrantyDays),
         }),
@@ -135,6 +138,20 @@ function EditProduct() {
               required
               style={inputStyle}
             />
+          </div>
+
+          {/* Category */}
+          <div style={inputGroup}>
+            <span style={iconStyle}>🏷️</span>
+            <select
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              style={inputStyle}
+            >
+              {["Electronics","Appliances","Furniture","Vehicle","Mobile","Laptop","Other"].map(c => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
           </div>
 
           {/* Purchase Date */}
