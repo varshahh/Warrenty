@@ -87,6 +87,10 @@ function Navbar() {
               Upload Bill
             </Link>
 
+            <Link to="/profile" className="nav-link">
+              Profile
+            </Link>
+
             <button
               onClick={handleLogout}
               className="logout-button"

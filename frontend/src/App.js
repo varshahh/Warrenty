@@ -18,6 +18,7 @@ import UploadBill from "./pages/UploadBill";
 import ProductDetails from "./pages/ProductDetails";
 import EditProduct from "./pages/EditProduct";
 import ForgotPassword from "./pages/ForgotPassword"; // ✅ Added
+import Profile from "./pages/Profile";
 
 // 🔥 Import Global CSS
 import "./App.css";
@@ -104,6 +105,7 @@ function App() {
             <Route path="/upload-bill" element={<UploadBill />} />
             <Route path="/product/:id" element={<ProductDetails />} />
             <Route path="/edit-product/:id" element={<EditProduct />} />
+            <Route path="/profile" element={<Profile />} />
           </Route>
 
           {/* 404 PAGE */}

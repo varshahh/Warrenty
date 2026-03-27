@@ -18,7 +18,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 
 # ---------------- CONFIG ----------------
-pytesseract.pytesseract.tesseract_cmd = os.getenv("TESSERACT_PATH", "tesseract")
+pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
 
 app = Flask(__name__)
 CORS(app, supports_credentials=True)
@@ -369,6 +369,49 @@ def dashboard():
         })
 
     return jsonify({"products": data})
+
+# ---------------- PROFILE ----------------
+@app.route('/profile', methods=['GET'])
+@jwt_required()
+def get_profile():
+    user_id = int(get_jwt_identity())
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({"message": "User not found"}), 404
+    return jsonify({"name": user.name, "email": user.email})
+
+@app.route('/profile', methods=['PUT', 'OPTIONS'])
+@jwt_required()
+def update_profile():
+    if request.method == "OPTIONS":
+        return '', 200
+
+    user_id = int(get_jwt_identity())
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({"message": "User not found"}), 404
+
+    data = request.get_json()
+    new_name = data.get("name", "").strip()
+    new_password = data.get("new_password", "").strip()
+    current_password = data.get("current_password", "").strip()
+
+    if not new_name:
+        return jsonify({"message": "Name cannot be empty"}), 400
+
+    user.name = new_name
+
+    if new_password:
+        if not current_password:
+            return jsonify({"message": "Current password required to set new password"}), 400
+        if not check_password_hash(user.password, current_password):
+            return jsonify({"message": "Current password is incorrect"}), 401
+        if len(new_password) < 6:
+            return jsonify({"message": "New password must be at least 6 characters"}), 400
+        user.password = generate_password_hash(new_password)
+
+    db.session.commit()
+    return jsonify({"message": "Profile updated successfully", "name": user.name})
 
 # ---------------- SERVE FILES ----------------
 @app.route('/uploads/<filename>')
