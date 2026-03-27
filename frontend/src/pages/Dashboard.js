@@ -13,6 +13,8 @@ function Dashboard() {
   const [search, setSearch] = useState("");
   const [previewBill, setPreviewBill] = useState(null);
   const [qrPreview, setQrPreview] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 6;
 
   // ---------------- FETCH PRODUCTS ----------------
   const fetchProducts = useCallback(async () => {
@@ -91,6 +93,15 @@ function Dashboard() {
     p.product_name?.toLowerCase().includes(search.toLowerCase())
   );
 
+  // reset to page 1 when search changes
+  useEffect(() => { setCurrentPage(1); }, [search]);
+
+  const totalPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE);
+  const paginatedProducts = filteredProducts.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
+
   const total = products.length;
   const active = products.filter((p) => p.status === "Active").length;
   const expiring = products.filter((p) => p.status === "Expiring Soon").length;
@@ -127,7 +138,7 @@ function Dashboard() {
         <div className="glass-card" style={{ textAlign: "center", padding: "40px" }}>No products yet. Upload a bill to get started.</div>
       ) : (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(300px,1fr))", gap: "20px" }}>
-          {filteredProducts.map((p) => {
+          {paginatedProducts.map((p) => {
             const purchase = new Date(p.purchase_date);
             const expiry = new Date(p.expiry_date);
             const totalDays = Math.ceil((expiry - purchase) / (1000 * 60 * 60 * 24));
@@ -178,6 +189,37 @@ function Dashboard() {
         </div>
       )}
 
+      {/* PAGINATION */}
+      {totalPages > 1 && (
+        <div style={paginationStyle}>
+          <button
+            onClick={() => setCurrentPage(p => Math.max(p - 1, 1))}
+            disabled={currentPage === 1}
+            style={pageBtn(currentPage === 1)}
+          >
+            ← Prev
+          </button>
+
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+            <button
+              key={page}
+              onClick={() => setCurrentPage(page)}
+              style={pageBtn(false, page === currentPage)}
+            >
+              {page}
+            </button>
+          ))}
+
+          <button
+            onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))}
+            disabled={currentPage === totalPages}
+            style={pageBtn(currentPage === totalPages)}
+          >
+            Next →
+          </button>
+        </div>
+      )}
+
       {previewBill && <PreviewModal src={previewBill} onClose={() => setPreviewBill(null)} />}
       {qrPreview && <PreviewModal src={qrPreview} onClose={() => setQrPreview(null)} />}
     </div>
@@ -216,5 +258,29 @@ const buttonGrid = {
   gap: "8px",
   marginTop: "12px"
 };
+
+const paginationStyle = {
+  display: "flex",
+  justifyContent: "center",
+  alignItems: "center",
+  gap: "8px",
+  marginTop: "30px",
+  flexWrap: "wrap"
+};
+
+const pageBtn = (disabled = false, active = false) => ({
+  padding: "8px 14px",
+  borderRadius: "8px",
+  border: "none",
+  cursor: disabled ? "not-allowed" : "pointer",
+  background: active
+    ? "linear-gradient(135deg,#6a11cb,#2575fc)"
+    : "rgba(255,255,255,0.2)",
+  color: "white",
+  fontWeight: active ? "bold" : "normal",
+  opacity: disabled ? 0.4 : 1,
+  backdropFilter: "blur(8px)",
+  transition: "all 0.2s ease"
+});
 
 export default Dashboard;
