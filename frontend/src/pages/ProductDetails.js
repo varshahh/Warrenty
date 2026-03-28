@@ -109,6 +109,7 @@ function ProductDetails() {
     );
 
   const progress = Math.min((product.days_remaining / product.warranty_days) * 100, 100);
+  const barColor = progress <= 25 ? "#ef4444" : progress <= 50 ? "#facc15" : "#22c55e";
 
   return (
     <div className="page-center">
@@ -164,7 +165,7 @@ function ProductDetails() {
             style={{
               width: `${progress}%`,
               height: "100%",
-              background: "#22c55e"
+              background: barColor
             }}
           />
         </div>
