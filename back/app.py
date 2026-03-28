@@ -414,25 +414,6 @@ def update_profile():
     db.session.commit()
     return jsonify({"message": "Profile updated successfully", "name": user.name})
 
-# ---------------- EXPORT CSV ----------------
-@app.route('/export_csv', methods=['GET'])
-@jwt_required()
-def export_csv():
-    import csv, io
-    user_id  = int(get_jwt_identity())
-    products = Product.query.filter_by(user_id=user_id).all()
-    output   = io.StringIO()
-    writer   = csv.writer(output)
-    writer.writerow(["Product Name", "Category", "Purchase Date", "Expiry Date", "Warranty Days", "Status", "Days Remaining"])
-    for p in products:
-        status, days = calculate_status(p.expiry_date)
-        writer.writerow([p.product_name, p.category or "Other",
-                         p.purchase_date.strftime("%Y-%m-%d"),
-                         p.expiry_date.strftime("%Y-%m-%d"),
-                         p.warranty_period, status, days])
-    return Response(output.getvalue(), mimetype="text/csv",
-                    headers={"Content-Disposition": "attachment; filename=warranties.csv"})
-
 # ---------------- SERVE FILES ----------------
 @app.route('/uploads/<filename>')
 def uploaded_file(filename):
