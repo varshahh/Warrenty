@@ -270,7 +270,7 @@ def upload_bill():
     if not purchase_date:
         purchase_date = datetime.today().strftime("%Y-%m-%d")
         user_id         = user_id
-    )
+    
     db.session.add(product)
     db.session.commit()
 

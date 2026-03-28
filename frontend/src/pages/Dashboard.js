@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { FaDownload } from "react-icons/fa";
 
-const BASE_URL = "http://127.0.0.1:5000";
+const BASE_URL = process.env.REACT_APP_API_URL || "http://127.0.0.1:5000";
 
 const CATEGORIES = ["All", "Appliances", "Electronics", "Mobile", "Laptop", "Other"];
 
