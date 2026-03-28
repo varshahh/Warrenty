@@ -21,17 +21,18 @@ from dateutil.relativedelta import relativedelta
 # ---------------- CONFIG ----------------
 app = Flask(__name__)
 CORS(app, supports_credentials=True)
+
 basedir = os.path.abspath(os.path.dirname(__file__))
 
-app.config["SQLALCHEMY_DATABASE_URI"]        = f"sqlite:///{os.path.join(basedir, 'warranty.db')}"
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-app.config["JWT_SECRET_KEY"]                 = os.getenv("JWT_SECRET", "dev-secret-key")
-app.config["MAIL_SERVER"]                    = "smtp.gmail.com"
-app.config["MAIL_PORT"]                      = 587
-app.config["MAIL_USE_TLS"]                   = True
-app.config["MAIL_USERNAME"]                  = os.getenv("MAIL_USERNAME", "")
-app.config["MAIL_PASSWORD"]                  = os.getenv("MAIL_PASSWORD", "")
-app.config["MAIL_DEFAULT_SENDER"]            = os.getenv("MAIL_USERNAME", "")
+app.config['SQLALCHEMY_DATABASE_URI']        = f"sqlite:///{os.path.join(basedir, 'warranty.db')}"
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['JWT_SECRET_KEY']                 = os.getenv("JWT_SECRET", "dev-secret-key")
+app.config['MAIL_SERVER']                    = "smtp.gmail.com"
+app.config['MAIL_PORT']                      = 587
+app.config['MAIL_USE_TLS']                   = True
+app.config['MAIL_USERNAME']                  = os.getenv("MAIL_USERNAME", "")
+app.config['MAIL_PASSWORD']                  = os.getenv("MAIL_PASSWORD", "")
+app.config['MAIL_DEFAULT_SENDER']            = os.getenv("MAIL_USERNAME", "")
 
 db   = SQLAlchemy(app)
 jwt  = JWTManager(app)
@@ -49,14 +50,14 @@ class User(db.Model):
     password = db.Column(db.String(200))
 
 class Product(db.Model):
-    id              = db.Column(db.Integer, primary_key=True)
-    product_name    = db.Column(db.String(200))
-    category        = db.Column(db.String(100), default="Other")
-    purchase_date   = db.Column(db.Date)
-    warranty_period = db.Column(db.String(50))
-    expiry_date     = db.Column(db.Date)
-    bill_image      = db.Column(db.String(200))
-    user_id         = db.Column(db.Integer)
+    id               = db.Column(db.Integer, primary_key=True)
+    product_name     = db.Column(db.String(200))
+    category         = db.Column(db.String(100), default="Other")
+    purchase_date    = db.Column(db.Date)
+    warranty_period  = db.Column(db.String(50))
+    expiry_date      = db.Column(db.Date)
+    bill_image       = db.Column(db.String(200))
+    user_id          = db.Column(db.Integer)
 
 with app.app_context():
     db.create_all()
@@ -66,6 +67,7 @@ with app.app_context():
         if "category" not in cols:
             conn.execute(sa_text("ALTER TABLE product ADD COLUMN category VARCHAR(100) DEFAULT 'Other'"))
             conn.commit()
+
 
 # ---------------- HELPERS ----------------
 def calculate_status(expiry_date):
@@ -92,10 +94,8 @@ def validate_product_data(data):
     try:
         if int(data.get("warranty_days", 0)) < 0:
             return "Invalid warranty"
-    except Exception:
+    except:
         return "Warranty must be number"
-    return None
-
 def categorize_product(product_name):
     name = product_name.lower()
     if any(k in name for k in ["ac", "air conditioner", "washing machine", "refrigerator",
@@ -103,7 +103,8 @@ def categorize_product(product_name):
                                 "water heater", "cooler", "fan", "iron", "vacuum",
                                 "tv", "television", "heater"]):
         return "Appliances"
-    if any(k in name for k in ["laptop", "notebook", "macbook", "chromebook", "thinkpad", "surface"]):
+    if any(k in name for k in ["laptop", "notebook", "macbook", "chromebook", "thinkpad",
+                                "surface", "hp", "dell", "lenovo", "asus", "acer"]):
         return "Laptop"
     if any(k in name for k in ["phone", "mobile", "smartphone", "iphone", "oneplus",
                                 "redmi", "realme", "oppo", "vivo", "nokia", "motorola", "pixel"]):
@@ -112,16 +113,14 @@ def categorize_product(product_name):
                                 "ipad", "smartwatch", "watch", "printer", "router",
                                 "monitor", "keyboard", "mouse", "hard disk", "ssd"]):
         return "Electronics"
-    return "Other"
-
+    return "Other"              "ipad", "smartwatch", "watch", "printer", "router",
 # ---------------- GEMINI EXTRACTION ----------------
 def gemini_extract(file_path):
     try:
-        api_key = os.getenv("GEMINI_API_KEY", "")
-        if not api_key:
+        if not GEMINI_API_KEY:
             return None
+        client = genai.Client(api_key=GEMINI_API_KEY)
         img = Image.open(file_path)
-        client = genai.Client(api_key=api_key)
         prompt = """You are analyzing a warranty bill or invoice image.
 Extract the following information and respond ONLY in this exact format, nothing else:
 
@@ -134,22 +133,31 @@ Rules:
 - If brand is not visible, just use the product type (e.g. Laptop, Air Conditioner)
 - PURCHASE_DATE must be the date of purchase/sale, not warranty start or expiry
 - If any field cannot be determined, write UNKNOWN for that field"""
-        response = client.models.generate_content(model="gemini-2.5-flash", contents=[prompt, img])
+        response = client.models.generate_content(
+            model="gemini-1.5-flash",
+            contents=[prompt, img]
+        )
+        return response.text.strip()
+    except Exception as e:
+        print("GEMINI ERROR:", e)
+        return Nonemodel.generate_content([prompt, img])
         return response.text.strip()
     except Exception as e:
         print("GEMINI ERROR:", e)
         return None
 
 def parse_gemini_response(text):
-    product_name   = None
-    purchase_date  = None
-    warranty_days  = 365
-    warranty_match = None
+    product_name     = None
+    purchase_date    = None
+    warranty_days    = 365
+    warranty_match   = None
+
     for line in text.strip().split("\n"):
         if line.startswith("PRODUCT_NAME:"):
             val = line.split(":", 1)[1].strip()
             if val and val.upper() != "UNKNOWN":
                 product_name = val
+
         elif line.startswith("PURCHASE_DATE:"):
             val = line.split(":", 1)[1].strip()
             if val and val.upper() != "UNKNOWN":
@@ -157,12 +165,13 @@ def parse_gemini_response(text):
                     dt = datetime.strptime(val, "%Y-%m-%d")
                     if 2000 <= dt.year <= datetime.today().year:
                         purchase_date = val
-                except Exception:
+                except:
                     pass
+
         elif line.startswith("WARRANTY_PERIOD:"):
             val = line.split(":", 1)[1].strip()
             if val and val.upper() != "UNKNOWN":
-                m = re.search(r"(\d+)\s*(year|years|yr|yrs|month|months|day|days)", val, re.I)
+                m = re.search(r'(\d+)\s*(year|years|yr|yrs|month|months|day|days)', val, re.I)
                 if m:
                     warranty_match = m
                     num  = int(m.group(1))
@@ -173,21 +182,26 @@ def parse_gemini_response(text):
                         warranty_days = num * 30
                     else:
                         warranty_days = num
+
     return product_name, purchase_date, warranty_days, warranty_match
 
+
 # ---------------- AUTH ----------------
-@app.route("/register", methods=["POST"])
+@app.route('/register', methods=['POST'])
 def register():
     data = request.json
     if User.query.filter_by(email=data.get("email")).first():
         return jsonify({"message": "User already exists"}), 400
-    user = User(name=data.get("name"), email=data.get("email"),
-                password=generate_password_hash(data.get("password")))
+    user = User(
+        name=data.get("name"),
+        email=data.get("email"),
+        password=generate_password_hash(data.get("password"))
+    )
     db.session.add(user)
     db.session.commit()
     return jsonify({"message": "User registered successfully"})
 
-@app.route("/login", methods=["POST"])
+@app.route('/login', methods=['POST'])
 def login():
     data = request.json
     user = User.query.filter_by(email=data.get("email")).first()
@@ -198,34 +212,51 @@ def login():
     token = create_access_token(identity=str(user.id))
     return jsonify({"token": token, "name": user.name})
 
-@app.route("/forgot-password", methods=["POST", "OPTIONS"])
+@app.route('/forgot-password', methods=['POST', 'OPTIONS'])
 def forgot_password():
-    if request.method == "OPTIONS":
-        return "", 200
+    if request.method == 'OPTIONS':
+        return '', 200
     data         = request.get_json()
-    email        = data.get("email", "").strip()
-    new_password = data.get("new_password", "").strip()
+    email        = data.get('email', '').strip()
+    new_password = data.get('new_password', '').strip()
     if not email or not new_password:
-        return jsonify({"message": "Email and new password required"}), 400
+        return jsonify({'message': 'Email and new password required'}), 400
     if len(new_password) < 6:
-        return jsonify({"message": "Password must be at least 6 characters"}), 400
+        return jsonify({'message': 'Password must be at least 6 characters'}), 400
     user = User.query.filter_by(email=email).first()
     if not user:
-        return jsonify({"message": "No account found with that email"}), 404
+        return jsonify({'message': 'No account found with that email'}), 404
     user.password = generate_password_hash(new_password)
     db.session.commit()
-    return jsonify({"message": "Password updated successfully"})
+    return jsonify({'message': 'Password updated successfully'})
 
 # ---------------- UPLOAD ----------------
-@app.route("/upload_bill", methods=["POST"])
+@app.route('/upload_bill', methods=['POST'])
 @jwt_required()
 def upload_bill():
     user_id = int(get_jwt_identity())
-    if "bill" not in request.files:
+    if 'bill' not in request.files:
         return jsonify({"message": "No file uploaded"}), 400
-    file     = request.files["bill"]
+
+    file     = request.files['bill']
     filename = f"{datetime.now().strftime('%Y%m%d%H%M%S')}_{secure_filename(file.filename)}"
     path     = os.path.join(basedir, "uploads", filename)
+    file.save(path)
+
+    gemini_raw = gemini_extract(path)
+    if gemini_raw:
+        product_name, purchase_date, warranty_days, warranty_match = parse_gemini_response(gemini_raw)
+    else:
+        product_name, purchase_date, warranty_days, warranty_match = None, None, 365, None
+
+    # defaults if Gemini couldn't extract
+    if not product_name:
+        product_name = "Unknown Product"
+    if not purchase_date:
+        purchase_date = datetime.today().strftime("%Y-%m-%d")
+
+    purchase_date_obj = datetime.strptime(purchase_date, "%Y-%m-%d").date()
+
     file.save(path)
 
     gemini_raw = gemini_extract(path)
@@ -238,32 +269,11 @@ def upload_bill():
         product_name = "Unknown Product"
     if not purchase_date:
         purchase_date = datetime.today().strftime("%Y-%m-%d")
-
-    purchase_date_obj = datetime.strptime(purchase_date, "%Y-%m-%d").date()
-    if warranty_match:
-        num  = int(warranty_match.group(1))
-        unit = warranty_match.group(2).lower()
-        if "year" in unit or "yr" in unit:
-            expiry_date_obj = purchase_date_obj + relativedelta(years=num)
-        elif "month" in unit:
-            expiry_date_obj = purchase_date_obj + relativedelta(months=num)
-        else:
-            expiry_date_obj = purchase_date_obj + timedelta(days=num)
-        warranty_days = (expiry_date_obj - purchase_date_obj).days
-    else:
-        expiry_date_obj = purchase_date_obj + timedelta(days=warranty_days)
-
-    product = Product(
-        product_name    = product_name,
-        category        = request.form.get("category") or categorize_product(product_name),
-        purchase_date   = purchase_date_obj,
-        warranty_period = str(warranty_days),
-        expiry_date     = expiry_date_obj,
-        bill_image      = filename,
         user_id         = user_id
     )
     db.session.add(product)
     db.session.commit()
+
     qr = generate_qr(product.id)
     return jsonify({
         "product_id":    product.id,
@@ -275,7 +285,7 @@ def upload_bill():
     })
 
 # ---------------- GET PRODUCT ----------------
-@app.route("/products/<int:id>", methods=["GET"])
+@app.route('/products/<int:id>', methods=['GET'])
 @jwt_required()
 def get_product(id):
     user_id = int(get_jwt_identity())
@@ -284,23 +294,23 @@ def get_product(id):
         return jsonify({"message": "Product not found"}), 404
     status, days = calculate_status(product.expiry_date)
     return jsonify({
-        "product_name":   product.product_name,
-        "category":       product.category or "Other",
-        "purchase_date":  product.purchase_date.strftime("%Y-%m-%d"),
-        "warranty_days":  int(product.warranty_period),
-        "expiry_date":    product.expiry_date.strftime("%Y-%m-%d"),
-        "status":         status,
+        "product_name":  product.product_name,
+        "category":      product.category or "Other",
+        "purchase_date": product.purchase_date.strftime("%Y-%m-%d"),
+        "warranty_days": int(product.warranty_period),
+        "expiry_date":   product.expiry_date.strftime("%Y-%m-%d"),
+        "status":        status,
         "days_remaining": days,
-        "bill_url":       f"/uploads/{product.bill_image}",
-        "qr_url":         f"/qrcodes/product_{product.id}.png"
+        "bill_url":      f"/uploads/{product.bill_image}",
+        "qr_url":        f"/qrcodes/product_{product.id}.png"
     })
 
 # ---------------- EDIT ----------------
-@app.route("/edit_product/<int:id>", methods=["PUT", "OPTIONS"])
+@app.route('/edit_product/<int:id>', methods=['PUT', 'OPTIONS'])
 @jwt_required()
 def edit_product(id):
     if request.method == "OPTIONS":
-        return "", 200
+        return '', 200
     user_id = int(get_jwt_identity())
     product = db.session.get(Product, id)
     if not product or product.user_id != user_id:
@@ -309,11 +319,12 @@ def edit_product(id):
     error = validate_product_data(data)
     if error:
         return jsonify({"message": error}), 400
-    product.product_name    = data.get("product_name")
-    product.category        = data.get("category", product.category or "Other")
-    purchase_date_obj       = datetime.strptime(data.get("purchase_date"), "%Y-%m-%d").date()
-    warranty_days           = int(data.get("warranty_days"))
-    product.purchase_date   = purchase_date_obj
+
+    product.product_name  = data.get("product_name")
+    product.category      = data.get("category", product.category or "Other")
+    purchase_date_obj     = datetime.strptime(data.get("purchase_date"), "%Y-%m-%d").date()
+    warranty_days         = int(data.get("warranty_days"))
+    product.purchase_date = purchase_date_obj
     product.warranty_period = str(warranty_days)
     years, remaining = divmod(warranty_days, 365)
     if remaining == 0 and years > 0:
@@ -324,25 +335,28 @@ def edit_product(id):
     return jsonify({"message": "Product updated successfully"})
 
 # ---------------- DELETE ----------------
-@app.route("/delete_product/<int:id>", methods=["DELETE", "OPTIONS"])
+@app.route('/delete_product/<int:id>', methods=['DELETE', 'OPTIONS'])
 @jwt_required()
 def delete_product(id):
     if request.method == "OPTIONS":
-        return "", 200
+        return '', 200
     user_id = int(get_jwt_identity())
     product = db.session.get(Product, id)
     if not product or product.user_id != user_id:
         return jsonify({"message": "Product not found"}), 404
-    for p in [os.path.join(basedir, "uploads", product.bill_image),
-              os.path.join(basedir, "qrcodes", f"product_{product.id}.png")]:
-        if os.path.exists(p):
-            os.remove(p)
+    for path in [
+        os.path.join(basedir, "uploads", product.bill_image),
+        os.path.join(basedir, "qrcodes", f"product_{product.id}.png")
+    ]:
+        if os.path.exists(path):
+            os.remove(path)
     db.session.delete(product)
     db.session.commit()
     return jsonify({"message": "Product deleted successfully"})
 
+
 # ---------------- DASHBOARD ----------------
-@app.route("/dashboard", methods=["GET"])
+@app.route('/dashboard', methods=['GET'])
 @jwt_required()
 def dashboard():
     user_id  = int(get_jwt_identity())
@@ -351,20 +365,20 @@ def dashboard():
     for p in products:
         status, days = calculate_status(p.expiry_date)
         data.append({
-            "product_id":     p.id,
-            "product_name":   p.product_name,
-            "category":       p.category or "Other",
-            "purchase_date":  p.purchase_date.strftime("%Y-%m-%d"),
-            "expiry_date":    p.expiry_date.strftime("%Y-%m-%d"),
-            "status":         status,
+            "product_id":    p.id,
+            "product_name":  p.product_name,
+            "category":      p.category or "Other",
+            "purchase_date": p.purchase_date.strftime("%Y-%m-%d"),
+            "expiry_date":   p.expiry_date.strftime("%Y-%m-%d"),
+            "status":        status,
             "days_remaining": days,
-            "bill_url":       f"/uploads/{p.bill_image}",
-            "qr_url":         f"/qrcodes/product_{p.id}.png"
+            "bill_url":      f"/uploads/{p.bill_image}",
+            "qr_url":        f"/qrcodes/product_{p.id}.png"
         })
     return jsonify({"products": data})
 
 # ---------------- PROFILE ----------------
-@app.route("/profile", methods=["GET"])
+@app.route('/profile', methods=['GET'])
 @jwt_required()
 def get_profile():
     user_id = int(get_jwt_identity())
@@ -373,13 +387,13 @@ def get_profile():
         return jsonify({"message": "User not found"}), 404
     return jsonify({"name": user.name, "email": user.email})
 
-@app.route("/profile", methods=["PUT", "OPTIONS"])
+@app.route('/profile', methods=['PUT', 'OPTIONS'])
 @jwt_required()
 def update_profile():
     if request.method == "OPTIONS":
-        return "", 200
-    user_id          = int(get_jwt_identity())
-    user             = db.session.get(User, user_id)
+        return '', 200
+    user_id  = int(get_jwt_identity())
+    user     = db.session.get(User, user_id)
     if not user:
         return jsonify({"message": "User not found"}), 404
     data             = request.get_json()
@@ -401,7 +415,7 @@ def update_profile():
     return jsonify({"message": "Profile updated successfully", "name": user.name})
 
 # ---------------- EXPORT CSV ----------------
-@app.route("/export_csv", methods=["GET"])
+@app.route('/export_csv', methods=['GET'])
 @jwt_required()
 def export_csv():
     import csv, io
@@ -420,25 +434,25 @@ def export_csv():
                     headers={"Content-Disposition": "attachment; filename=warranties.csv"})
 
 # ---------------- SERVE FILES ----------------
-@app.route("/uploads/<filename>")
+@app.route('/uploads/<filename>')
 def uploaded_file(filename):
     return send_from_directory(os.path.join(basedir, "uploads"), filename, as_attachment=True)
 
-@app.route("/qrcodes/<filename>")
+@app.route('/qrcodes/<filename>')
 def qr_file(filename):
     return send_from_directory(os.path.join(basedir, "qrcodes"), filename, as_attachment=True)
 
 # ---------------- EMAIL ALERTS ----------------
 def send_expiry_alert(user_email, user_name, product_name, days_remaining, expiry_date):
     try:
-        if not app.config["MAIL_USERNAME"]:
+        if not app.config['MAIL_USERNAME']:
             return
-        days_word = "day" if days_remaining == 1 else "days"
-        subject   = f"Warning: Warranty Expiring in {days_remaining} {days_word} - {product_name}"
+        days_word = 'day' if days_remaining == 1 else 'days'
+        subject   = f"⚠️ Warranty Expiring in {days_remaining} {days_word} – {product_name}"
         html_body = f"""
         <div style="font-family:Arial,sans-serif;max-width:520px;margin:auto;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;">
           <div style="background:linear-gradient(135deg,#6a11cb,#2575fc);padding:24px;text-align:center;">
-            <h2 style="color:white;margin:0;">Warranty Expiry Alert</h2>
+            <h2 style="color:white;margin:0;">⚠️ Warranty Expiry Alert</h2>
           </div>
           <div style="padding:28px;background:#f8fafc;">
             <p style="font-size:16px;">Hi <strong>{user_name}</strong>,</p>
@@ -448,6 +462,7 @@ def send_expiry_alert(user_email, user_name, product_name, days_remaining, expir
               <p style="margin:4px 0 0;font-size:20px;font-weight:bold;color:#ef4444;">{expiry_date}</p>
               <p style="margin:4px 0 0;font-size:14px;color:#64748b;">{days_remaining} {days_word} remaining</p>
             </div>
+            <p style="font-size:13px;color:#94a3b8;">Log in to Smart Warranty to view or renew your warranty.</p>
           </div>
           <div style="padding:14px;text-align:center;background:#f1f5f9;">
             <p style="margin:0;font-size:12px;color:#94a3b8;">Smart Warranty Team</p>
@@ -467,19 +482,18 @@ def check_warranty_alerts():
             if days_left in [5, 3, 1]:
                 user = db.session.get(User, p.user_id)
                 if user and user.email:
-                    send_expiry_alert(user.email, user.name, p.product_name,
-                                      days_left, p.expiry_date.strftime("%Y-%m-%d"))
+                    send_expiry_alert(user.email, user.name, p.product_name, days_left, p.expiry_date.strftime("%Y-%m-%d"))
 
 scheduler = BackgroundScheduler()
-scheduler.add_job(check_warranty_alerts, "cron", hour=9, minute=0)
+scheduler.add_job(check_warranty_alerts, 'cron', hour=9, minute=0)
 scheduler.start()
 
-@app.route("/test_alerts", methods=["GET"])
+@app.route('/test_alerts', methods=['GET'])
 def test_alerts():
     check_warranty_alerts()
     return jsonify({"message": "Alert check triggered"})
 
-@app.route("/set_expiry/<int:id>/<int:days>", methods=["GET"])
+@app.route('/set_expiry/<int:id>/<int:days>', methods=['GET'])
 def set_expiry(id, days):
     product = db.session.get(Product, id)
     if not product:
