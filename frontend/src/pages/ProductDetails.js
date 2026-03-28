@@ -108,8 +108,7 @@ function ProductDetails() {
       </div>
     );
 
-  const progress =
-    (product.days_remaining / product.warranty_days) * 100;
+  const progress = Math.min((product.days_remaining / product.warranty_days) * 100, 100);
 
   return (
     <div className="page-center">

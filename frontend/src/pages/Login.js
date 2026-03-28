@@ -30,6 +30,7 @@ function Login() {
 
       if (res.ok && data.token) {
         localStorage.setItem("token", data.token);
+        localStorage.setItem("name", data.name || "");
 
         window.dispatchEvent(new Event("authChange"));
 
