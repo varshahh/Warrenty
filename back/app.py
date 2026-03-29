@@ -82,8 +82,13 @@ def calculate_status(expiry_date):
     return status, max(days_remaining, 0)
 
 def generate_qr(product_id):
-    frontend_host = os.environ.get("FRONTEND_HOST", "localhost:3000")
-    url = f"http://{frontend_host}/product/public/{product_id}"
+    frontend_host = os.environ.get("FRONTEND_HOST", "http://localhost:3000")
+    # Strip trailing slash if any
+    frontend_host = frontend_host.rstrip("/")
+    # Add http:// only if no protocol present
+    if not frontend_host.startswith("http"):
+        frontend_host = f"http://{frontend_host}"
+    url = f"{frontend_host}/product/public/{product_id}"
     qr_path = os.path.join(basedir, "qrcodes", f"product_{product_id}.png")
     qrcode.make(url).save(qr_path)
     return f"/qrcodes/product_{product_id}.png"
