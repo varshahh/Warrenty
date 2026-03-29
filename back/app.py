@@ -135,7 +135,7 @@ Rules:
 - PURCHASE_DATE must be the date of purchase/sale, not warranty start or expiry
 - If any field cannot be determined, write UNKNOWN for that field"""
         response = client.models.generate_content(
-            model="gemini-2.0-flash",
+            model="gemini-2.5-flash",
             contents=[prompt, img]
         )
         result = response.text.strip()
