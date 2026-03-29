@@ -83,7 +83,7 @@ def calculate_status(expiry_date):
 
 def generate_qr(product_id):
     frontend_host = os.environ.get("FRONTEND_HOST", "localhost:3000")
-    url = f"http://{frontend_host}/product/{product_id}"
+    url = f"http://{frontend_host}/product/public/{product_id}"
     qr_path = os.path.join(basedir, "qrcodes", f"product_{product_id}.png")
     qrcode.make(url).save(qr_path)
     return f"/qrcodes/product_{product_id}.png"
@@ -297,6 +297,22 @@ def get_product(id):
         "days_remaining": days,
         "bill_url":      f"/uploads/{product.bill_image}",
         "qr_url":        f"/qrcodes/product_{product.id}.png"
+    })
+
+# ---------------- PUBLIC PRODUCT (QR scan) ----------------
+@app.route('/public/product/<int:id>', methods=['GET'])
+def public_product(id):
+    product = db.session.get(Product, id)
+    if not product:
+        return jsonify({"message": "Product not found"}), 404
+    status, days = calculate_status(product.expiry_date)
+    return jsonify({
+        "product_name":  product.product_name,
+        "category":      product.category or "Other",
+        "purchase_date": product.purchase_date.strftime("%Y-%m-%d"),
+        "expiry_date":   product.expiry_date.strftime("%Y-%m-%d"),
+        "status":        status,
+        "days_remaining": days,
     })
 
 # ---------------- EDIT ----------------

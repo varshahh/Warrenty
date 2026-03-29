@@ -19,6 +19,7 @@ import ProductDetails from "./pages/ProductDetails";
 import EditProduct from "./pages/EditProduct";
 import ForgotPassword from "./pages/ForgotPassword"; // ✅ Added
 import Profile from "./pages/Profile";
+import PublicProduct from "./pages/PublicProduct";
 
 // 🔥 Import Global CSS
 import "./App.css";
@@ -98,6 +99,9 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/forgot-password" element={<ForgotPassword />} /> {/* ✅ Added */}
           </Route>
+
+          {/* PUBLIC QR SCAN ROUTE */}
+          <Route path="/product/public/:id" element={<PublicProduct />} />
 
           {/* PROTECTED ROUTES */}
           <Route element={<ProtectedRoute />}>
