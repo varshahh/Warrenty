@@ -91,24 +91,7 @@ function Dashboard() {
     }
   };
 
-  // ---------------- EXPORT CSV ----------------
-  const exportCSV = async () => {
-    const token = localStorage.getItem("token");
-    try {
-      const res = await fetch(`${BASE_URL}/export_csv`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      const blob = await res.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "warranties.csv";
-      a.click();
-      window.URL.revokeObjectURL(url);
-    } catch (err) {
-      alert("Export failed.");
-    }
-  };
+
 
   const filteredProducts = products.filter((p) => {
     const matchSearch = p.product_name?.toLowerCase().includes(search.toLowerCase());
@@ -136,7 +119,6 @@ function Dashboard() {
     <div style={{ padding: "30px" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
         <h1>📦 Warranty Dashboard</h1>
-        <button onClick={exportCSV} style={exportBtnStyle}>⬇ Export CSV</button>
       </div>
       {message && <p style={{ color: "red", fontWeight: "bold" }}>{message}</p>}
 
@@ -274,16 +256,6 @@ const StatCard = ({ title, value, color }) => (
   </div>
 );
 
-const exportBtnStyle = {
-  padding: "8px 16px",
-  borderRadius: "10px",
-  border: "none",
-  cursor: "pointer",
-  background: "linear-gradient(135deg,#6a11cb,#2575fc)",
-  color: "white",
-  fontWeight: "600",
-  fontSize: "13px"
-};
 
 const searchStyle = {
   padding: "12px 18px",

@@ -107,13 +107,14 @@ def categorize_product(product_name):
                                 "surface", "hp", "dell", "lenovo", "asus", "acer"]):
         return "Laptop"
     if any(k in name for k in ["phone", "mobile", "smartphone", "iphone", "oneplus",
-                                "redmi", "realme", "oppo", "vivo", "nokia", "motorola", "pixel"]):
+                                "redmi", "realme", "oppo", "vivo", "nokia", "motorola", "pixel",
+                                "samsung", "galaxy", "s23", "s24", "s22", "note"]):
         return "Mobile"
     if any(k in name for k in ["camera", "headphone", "earphone", "speaker", "tablet",
                                 "ipad", "smartwatch", "watch", "printer", "router",
                                 "monitor", "keyboard", "mouse", "hard disk", "ssd"]):
         return "Electronics"
-    return "Other"              "ipad", "smartwatch", "watch", "printer", "router",
+    return "Other"
 # ---------------- GEMINI EXTRACTION ----------------
 def gemini_extract(file_path):
     try:
@@ -134,14 +135,12 @@ Rules:
 - PURCHASE_DATE must be the date of purchase/sale, not warranty start or expiry
 - If any field cannot be determined, write UNKNOWN for that field"""
         response = client.models.generate_content(
-            model="gemini-1.5-flash",
+            model="gemini-2.0-flash",
             contents=[prompt, img]
         )
-        return response.text.strip()
-    except Exception as e:
-        print("GEMINI ERROR:", e)
-        return Nonemodel.generate_content([prompt, img])
-        return response.text.strip()
+        result = response.text.strip()
+        print("GEMINI RESPONSE:", result)
+        return result
     except Exception as e:
         print("GEMINI ERROR:", e)
         return None
@@ -249,28 +248,23 @@ def upload_bill():
     else:
         product_name, purchase_date, warranty_days, warranty_match = None, None, 365, None
 
-    # defaults if Gemini couldn't extract
     if not product_name:
         product_name = "Unknown Product"
     if not purchase_date:
         purchase_date = datetime.today().strftime("%Y-%m-%d")
 
     purchase_date_obj = datetime.strptime(purchase_date, "%Y-%m-%d").date()
+    expiry_date_obj   = purchase_date_obj + timedelta(days=warranty_days)
 
-    file.save(path)
-
-    gemini_raw = gemini_extract(path)
-    if gemini_raw:
-        product_name, purchase_date, warranty_days, warranty_match = parse_gemini_response(gemini_raw)
-    else:
-        product_name, purchase_date, warranty_days, warranty_match = None, None, 365, None
-
-    if not product_name:
-        product_name = "Unknown Product"
-    if not purchase_date:
-        purchase_date = datetime.today().strftime("%Y-%m-%d")
-        user_id         = user_id
-    
+    product = Product(
+        product_name   = product_name,
+        category       = categorize_product(product_name),
+        purchase_date  = purchase_date_obj,
+        expiry_date    = expiry_date_obj,
+        warranty_period= str(warranty_days),
+        bill_image     = filename,
+        user_id        = user_id
+    )
     db.session.add(product)
     db.session.commit()
 
